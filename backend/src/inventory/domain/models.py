@@ -1,16 +1,24 @@
-from dataclasses import dataclass, InitVar
+from __future__ import annotations
+from dataclasses import dataclass, InitVar, field
 from collections import namedtuple
 from datetime import datetime
 from enum import Enum
+import hashlib
 import pytz
 
 from inventory.domain import stock_control
 from inventory.domain import events
-#from inventory import config
+
+# from inventory import config
 
 timezone = pytz.timezone("Africa/Lagos")  # config.timezone
 
 Dispatch = namedtuple("Dispatch", "quantity from_")
+
+
+def sku_generator(name: str, size: MeasurementMetric, product_number: int):
+    identifier = f"{name.strip().upper()[:3]}-{size.code}"
+    return f"{identifier}-{product_number}"
 
 
 class OutOfStock(Exception):
@@ -18,10 +26,16 @@ class OutOfStock(Exception):
 
 
 class MeasurementMetric(Enum):
-    small = "small"
-    medium = "medium"
-    big = "big"
-    large = "large"
+    def __new__(cls, value, code):
+        obj = object.__new__(cls)
+        obj._value_ = value
+        obj.code = code
+        return obj
+
+    small = "small", "SM"
+    medium = "medium", "MD"
+    big = "big", "BG"
+    large = "large", "LG"
 
 
 @dataclass
@@ -64,7 +78,7 @@ class Stock:
     sku: str
     name: str
     metric: MeasurementMetric
-    batches: list[Batch]
+    batches: list[Batch] = field(default_factory=list)
     version_number: int = 0
     control_strategy: InitVar[str, None] = None
     offset: int = 0
@@ -80,8 +94,9 @@ class Stock:
         "Return batch identified by ref."
         return next(batch for batch in self.batches if batch.ref == ref)
 
-    def __post_init__(self, control_strategy):
-        self.controller = stock_control.get_controller(self, control_strategy)
+    def __post_init__(self, control_strategy=None):
+        if control_strategy:
+            self.controller = stock_control.get_controller(self, control_strategy)
 
     @property
     def level(self):
@@ -94,7 +109,7 @@ class Stock:
     def set_control_strategy(self, control_strategy: str):
         self.controller = stock_control.get_controller(control_strategy)
 
-    def add(ref: str, quantity: float, price: float, timestamp: float):
+    def add(self, ref: str, quantity: float, price: float, timestamp: float):
         time = datetime.fromtimestamp(timestamp, tz=timezone)
         new_batch = Batch(self.sku, ref, quantity, price, time)
         self.batches.append(new_batch)
@@ -102,11 +117,11 @@ class Stock:
             events.BatchAddedToStock(self.sku, new_batch.ref, quantity, price, time)
         )
 
-    def dispatch(quantity: int, timestamp: float):
+    def dispatch(self, quantity: int, timestamp: float):
         dispatch_time = datetime.fromtimestamp(timestamp, tz=timezone)
         if quantity > self.level:
             raise OutOfStock(f"Low Stock Level : Stock<{self.sku}>.")
-        dispatch_list = self._dispatch_from_batches_(quantity, time)
+        dispatch_list = self._dispatch_from_batches_(quantity, dispatch_time)
         self.events.append(
             events.DispatchedFromStock(self.sku, quantity, dispatch_time)
         )
@@ -121,6 +136,7 @@ class Stock:
             if batch.quantity == 0:
                 continue
             dispatch = batch.dispatch(quantity)
+            quantity -= dispatch.quantity
             dispatch_list.append(dispatch)
         return dispatch_list
 
