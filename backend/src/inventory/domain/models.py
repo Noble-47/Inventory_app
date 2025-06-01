@@ -9,9 +9,7 @@ import pytz
 from inventory.domain import stock_control
 from inventory.domain import events
 
-# from inventory import config
-
-timezone = pytz.timezone("Africa/Lagos")  # config.timezone
+from inventory.config import TIMEZONE as timezone
 
 Dispatch = namedtuple("Dispatch", "quantity from_")
 
