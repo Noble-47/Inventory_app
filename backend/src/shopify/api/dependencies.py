@@ -3,7 +3,7 @@ from typing import Annotated, Any
 import uuid
 
 from fastapi.security import OAuth2PasswordBearer
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, status
 
 from jwt.exceptions import InvalidTokenError
 from sqlmodel import Session
@@ -17,8 +17,10 @@ from shopify import db
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/accounts/token")
 
+
 async def get_current_user(
-    token: Annotated[str, Depends(oauth2_scheme)], session: Annotated[Session, Depends(db.db_session)]
+    token: Annotated[str, Depends(oauth2_scheme)],
+    session: Annotated[Session, Depends(db.db_session)],
 ):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -26,13 +28,13 @@ async def get_current_user(
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        payload = jwt.decode(token, config.SECRET_KEY, algorithms=[config.ALGORITHM])
+        payload = jwt.decode(token, config.SECRET_KEY, algorithms=[config.TOKEN_ALGORITHM])
         email = payload.get("sub")
         if email is None:
             raise credentials_exception
     except InvalidTokenError:
         raise credentials_exception
-    user = get_account_record(email, session)
+    user = utils.get_account_record(email, session)
     if user is None:
         raise credentials_exception
     return user
@@ -42,30 +44,43 @@ async def get_current_active_user(
     current_user: Annotated[dict[str, Any], Depends(get_current_user)]
 ):
     if not current_user.get("is_active"):
-        raise HTTPException(status_code=400, details="Inactive User")
+        raise HTTPException(status_code=400, detail="Inactive User")
     if not current_user.get("is_verified"):
-        raise HTTPException(status_code=400, details="Unverified User")
+        raise HTTPException(status_code=400, detail="Unverified User")
     return current_user
 
+## Business Related Dependencies
+def get_business_id_from_user_record(business_name:str, active_user:Annotated[uuid.UUID, Depends(get_current_active_user)]):
+    if business_name in active_user['business']:
+        return active_user['business'][business_name]['id']
+    raise HTTPException(status_code=404, detail="Business Not Found")
 
-async def verify_current_user_is_business_owner(business_id, active_user:Annotated[dict[str, Any], Depends(get_current_active_user)]):
-    entity = active_user['registry'].get(business_id)
-    if entity is None:
-        raise HTTPExceptino(status_code=404, details='Business Not Found')
-    if entity['entity_type'] != 'business':
-        raise HTTPException(status_code=405, details='Can only add shop to businesses')
-    return active_user
+
+async def verify_current_user_is_business_owner(
+    business_name:str,
+    active_user: Annotated[dict[str, Any], Depends(get_current_active_user)],
+):
+    if business_name in active_user['business']:
+        return active_user
+    raise HTTPException(status_code=404, detail="Business Not Found")
+
 
 async def verify_shop_belongs_to_current_user_business(
-    business_id:uuid.UUID,
+    business_id: uuid.UUID,
     shop_id,
-    active_user:Annotated[dict[str, Any], Depends(verify_current_user_is_business_owner)],
-    session : Annotated[Session, Depends(db.db_session)]
+    active_user: Annotated[
+        dict[str, Any], Depends(verify_current_user_is_business_owner)
+    ],
+    session: Annotated[Session, Depends(db.db_session)],
 ):
-    if utils.check_shop_belong_to_business(shop_id, business_id, session):
+    business = active_user['business'].get(business_id)
+    if business is None:
+        raise HTTPException(status_code=404, detail="Business Not Found")
+    if shop_id in business.get('shops', []):
         return active_user
-    raise HTTPException(status_code=404, details="Shop Not Found")
+    raise HTTPException(status_code=404, detail="Shop Not Found")
 
 
 SessionDep = Annotated[Session, Depends(db.db_session)]
 ActiveUserDep = Annotated[dict[str, Any], Depends(get_current_active_user)]
+BusinessIDDep = Annotated[uuid.UUID, Depends(get_business_id_from_user_record)]

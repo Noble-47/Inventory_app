@@ -8,9 +8,10 @@ from shopify.db.tokenizer import Tokenizer
 from shopify.db.accounts import Account
 from shopify.db.registry import Registry
 from shopify.db.business import Business
-from shopify.db.settings import Setting
+from shopify.db.settings import SettingDB as Setting
 from shopify.db.audit import Audit
 from shopify.db.shops import Shop
+from shopify.db.views import View
 
 
 __all__ = [
@@ -22,6 +23,7 @@ __all__ = [
     Setting,
     Audit,
     Shop,
+    View,
     create_tables,
     db_session,
 ]

@@ -1,7 +1,7 @@
 from datetime import datetime
 import uuid
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, ConfigDict
 
 
 class Account(BaseModel):
@@ -9,23 +9,38 @@ class Account(BaseModel):
     lastname: str
     email: EmailStr
 
+class AccountCreate(Account):
+    password: str
+
+class AccountBusinessProfile(BaseModel):
+    id : uuid.UUID
+    shops : list[uuid.UUID]
+    created : datetime
+
+class AccountShopProfile(BaseModel):
+    id : uuid.UUID
+    permissions : list[str, list]
+    assigned : datetime
 
 class Profile(Account):
     is_active: bool
     is_verified: bool
-
-
-class AccountCreate(Account):
-    password: str
+    business : dict[str, AccountBusinessProfile]
+    managed_shops : dict[str, AccountShopProfile]
 
 
 class Token(BaseModel):
     access_token: str
     token_type: str
 
+
+class Login(BaseModel):
+    email:EmailStr
+    password:str
+
 class Shop(BaseModel):
     id : uuid.UUID
-    manager : str
+    manager : str | None
     location : str
 
 class BusinessProfile(BaseModel):
@@ -38,6 +53,7 @@ class Setting(BaseModel):
     name : str
     value : str | int
     tag : str | None
+    description:str
 
 class EntitySetting(BaseModel):
     id : uuid.UUID

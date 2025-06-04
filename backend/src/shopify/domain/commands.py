@@ -3,7 +3,7 @@ import uuid
 from pydantic import BaseModel
 
 
-class Command(BaseModel):
+class Command(BaseModel, frozen=True):
     pass
 
 
@@ -21,7 +21,7 @@ class VerifyAccount(Command):
 
 class CreateBusiness(Command):
     name: str
-    owner_id: uuid.UUID
+    email: str
 
 class UpdateSetting(Command):
     entity_id : uuid.UUID

@@ -1,10 +1,10 @@
 from sqlmodel import SQLModel, create_engine, Session
 from datetime import datetime, timedelta
-from sqlalchemy import event
+from sqlalchemy import event, text
 
 from shopify import config
 from shopify.domain.read_models import BusinessView, ShopView
-from shopify.domain.models import Account, Business, Shop, Registry
+from shopify.domain.models import Account, Business, BusinessRegistry, ShopRegistry
 from shopify.db.models import (
     Token,
     AccountVerification,
@@ -19,24 +19,17 @@ class BaseRepo:
         self.session = session
         self.events = events
 
-    def get(*args, **kwargs):
+    def get(self, *args, **kwargs):
         obj = self._get(*args, **kwargs)
-        self.session.add(obj)
         return obj
 
-    def create(*args, **kwargs):
+    def create(self, *args, **kwargs):
         obj = self._create(*args, **kwargs)
         self.session.add(obj)
         return obj
 
-    # def save(self, obj: ORMObject):
-    #    self.session.add(obj)
-    #    self.session.refresh(obj)
-    #    return obj
-
-
 @event.listens_for(Token, "load")
-def check_token_has_expired(mapper, connection, target) -> Token:
+def check_token_has_expired(target, context):
     token = target
     time_lived = (token.created - datetime.now(config.TIMEZONE)).seconds
     if time_lived >= token.ttl:
@@ -45,10 +38,23 @@ def check_token_has_expired(mapper, connection, target) -> Token:
     return token
 
 
-def create_tables(database_url=config.DATABASE_URL):
-    engine = create_engine(database_url)
-    SQLModel.metadata.create_all(engine)
+def create_default_settings(engine):
+    with engine.connect() as conn:
+        conn.execute(text(
+            """
+            INSERT INTO setting (name, tag, description)
+            VALUES (:name, :tag, :description)
+            ON CONFLICT(name)
+            DO NOTHING
+            """
+        ), config.DEFAULT_SETTINGS)
+        conn.commit()
 
+engine = create_engine(config.DATABASE_URL)
+
+def create_tables():
+    SQLModel.metadata.create_all(engine)
+    create_default_settings(engine)
 
 def db_session():
     with Session(engine) as session:

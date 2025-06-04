@@ -1,15 +1,22 @@
+from datetime import datetime
 import uuid
+import json
+
+from sqlmodel import select
 
 from shopify.domain.read_models import BusinessView, ShopView
+from shopify.config import TIMEZONE
 from shopify import db
 
 
 def business_view(business_id: uuid.UUID):
     session = next(db.db_session())
-    business = self.session.exec(
+    business = session.exec(
         select(BusinessView).where(BusinessView.business_id == business_id)
-    )
-    shops = self.sessions.exec(
+    ).first()
+    if business is None:
+        return
+    shops = session.exec(
         select(ShopView).where(ShopView.business_id == business_id)
     ).all()
     view = business.model_dump()
@@ -19,7 +26,7 @@ def business_view(business_id: uuid.UUID):
 
 def shop_view(shop_id: uuid.UUID):
     session = next(db.db_session())
-    shop = self.session.exec(select(ShopView).where(ShopView.shop_id == shop_id))
+    shop = session.exec(select(ShopView).where(ShopView.shop_id == shop_id))
     return shop.model_dump()
 
 
@@ -30,30 +37,28 @@ def business_settings(business_id: uuid.UUID):
     settings = setting_db.fetch(business_id)
     view = {}
     view["id"] = business_id
+    view["shops"] = []
     view["settings"] = [
-        {"name": setting.name, "value": setting.value, "tag": setting.tag}
+        {"name": setting.name, "value": setting.value, "tag": setting.tag, "description" : setting.description}
         for setting in settings
     ]
-    shops = self.session.exec(
+    shops = session.exec(
         select(ShopView.shop_id).where(ShopView.business_id == business_id)
     ).all()
-    for shop in shops:
-        shop_settings = setting_db.fetch(shop.shop_id)
-        view["shops"].append(
-            [
-                {
-                    "id": shop.shop_id,
-                    "settings": [
-                        {
-                            "name": setting.name,
-                            "value": setting.value,
-                            "tag": setting.tag,
-                        }
-                        for setting in shop_settings
-                    ],
-                }
-            ]
-        )
+    for shop_id in shops:
+        shop_settings = setting_db.fetch(shop_id)
+        view["shops"].append({
+            "id": shop_id,
+                "settings": [
+                    {
+                        "name": setting["name"],
+                        "value": setting["value"],
+                        "tag": setting["tag"],
+                        "description" : setting["description"]
+                    }
+                    for setting in shop_settings
+                ],
+        })
     return view
 
 
@@ -64,7 +69,7 @@ def shop_settings(shop_id: uuid.UUID):
     view = {}
     view["id"] = business_id
     view["settings"] = [
-        {"name": setting.name, "value": setting.value, "tag": setting.tag}
+        {"name": setting.name, "value": setting.value, "tag": setting.tag, "description" : setting.description}
         for setting in settings
     ]
     return view
@@ -73,7 +78,7 @@ def shop_settings(shop_id: uuid.UUID):
 ## view invites
 def business_invites(business_id: uuid.UUID):
     session = next(db.db_session())
-    token_db = db.Token(session)
+    token_db = db.Tokenizer(session)
     invites = token_db.fetch(business_id)
     view = {}
     view["id"] = business_id
@@ -114,4 +119,6 @@ def audit_unit(business_id: uuid.UUID, audit_id):
     session = next(db.db_session())
     audit_db = db.Audit(session)
     audit = audit_db.get(audit_id, business_id)
-    return audit.model_dump()
+    view = audit.model_dump()
+    view['payload'] = json.loads(view['payload'])
+    return view

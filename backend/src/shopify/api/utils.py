@@ -14,12 +14,10 @@ from shopify import config
 from shopify import db
 
 
-def authenticate_account(session, email: str, password: str):
-    db = db.Account(session)
-    user = db.get(email)
-    if user is None:
-        return False
-    if verify_password(password, user.password) is False:
+def authenticate_user(session, email: str, password: str):
+    user_db = db.Account(session)
+    user = user_db.get(email)
+    if user is None or not verify_password(password, user.password_hash):
         return False
     return user
 
@@ -30,8 +28,28 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
         seconds=config.API_TOKEN_EXPIRATION_SECONDS
     )
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, config.SECRET_KEY, algorithm=config.ALGORITHM)
+    encoded_jwt = jwt.encode(to_encode, config.SECRET_KEY, algorithm=config.TOKEN_ALGORITHM)
     return encoded_jwt
+
+
+profile = {
+    "firstname": "somename",
+    "lastname": "somename",
+    "email": "somename",
+    "business": {
+        "abc-sfs-345": {
+            "name": "business_name",
+            "shops": ["shop_1.id", "shop_2.id", "shop_3.id"],
+            "created" : "datetime"
+        }
+    },
+    "managed_shops": {
+            "bsf-asd-3242-dsdf": {
+                "loc": "some location",
+                "permissions": {"sale": [], "inventory": []},
+            }
+    },
+}
 
 
 def get_account_record(email: str, session: Session):
@@ -41,26 +59,38 @@ def get_account_record(email: str, session: Session):
         return None
     registry_db = db.Registry(session)
     records = registry_db.fetch(user.id)
+    records = parse_records(records)
     account_record = user.model_dump()
-    account_record.pop("password_hash")
-    registry, permissions = parse_user_registry(records)
-    account_record["registry"] = registry
-    account_record["permissions"] = permissions
+    account_record.update(records)
     return account_record
 
-
-def parse_user_registry(records: list[models.Registry]):
-    parsed_permissions = {}
-    registry = {}
-    for record in records:
-        parsed_permissions[record.entity_id] = permission.parse_permission_str(
-            record.permission
+def parse_records(records : dict[str, list]):
+    parsed = {}
+    parsed["business"]  = {}
+    parsed["managed_shops"] = {}
+    for business in records['business']:
+        parsed["business"].update(
+            {
+                business["business_name"] : {
+                    "id" : business["business_id"],
+                    "shops" : business["shops"],
+                    "created" : business["created"]
+                }
+            }
         )
-        registry[record.entity_id] = {
-            "name": record_entity_name,
-            "type": record.entity_type,
-        }
-    return registry, parsed_permissions
+
+    for shop in records["managed_shops"]:
+        parsed["managed_shops"].update(
+            {
+                shop["shop_location"] : {
+                    "id" : shop["id"],
+                    "permissions" : shop["permissions"],
+                    "assigned" : shop["assigned"]
+                }
+            }
+        )
+
+    return parsed
 
 def check_shop_belong_to_business(shop_id, business_id, session):
     shop_db = db.Shop(session)

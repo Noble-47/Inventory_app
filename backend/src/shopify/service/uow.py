@@ -2,15 +2,17 @@ from shopify import db
 
 
 class UnitOfWork:
-    session_maker = db.db_session
+    def __init__(self, session_maker=db.db_session):
+        self.session_maker = session_maker
 
     def __enter__(self):
-        self.session = next(session_maker)
+        self.session = next(self.session_maker())
         self.prepare()
         return self
 
     def prepare(self):
         events = []
+        self.views = db.View(self.session)
         self.business = db.Business(self.session, events)
         self.accounts = db.Account(self.session, events)
         self.shops = db.Shop(self.session, events)
@@ -21,11 +23,16 @@ class UnitOfWork:
         self.settings = db.Setting(self.session, events)
         self.events = events
 
-    def __exit__(self):
+    def __exit__(self, *args, **kwargs):
         self.session.rollback()
 
     def commit(self):
+        for business in self.business.seen:
+            self.events.extend(business.events)
+            business.events.clear()
         self.session.commit()
 
     def collect_events(self):
-        return (event for event in self.events)
+        for event in self.events:
+            yield event
+        self.events.clear()

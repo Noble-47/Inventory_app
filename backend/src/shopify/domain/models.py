@@ -1,12 +1,18 @@
-from __future__ import annotations
 from functools import partial
 from datetime import datetime
+from typing import ClassVar
 import pytz
 import uuid
 
-from sqlmodel import SQLModel, Field, Relationship
+from sqlmodel import SQLModel, Field, Relationship, UniqueConstraint
+from pydantic import model_serializer, ConfigDict
 
 from shopify import config
+from shopify import exceptions
+from shopify import permissions
+from shopify.domain import events
+
+datetime_now_utc = partial(datetime.now, config.TIMEZONE)
 
 class Account(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
@@ -16,6 +22,20 @@ class Account(SQLModel, table=True):
     password_hash: str
     is_active: bool = True
     is_verified: bool = False
+
+    @property
+    def fullname(self):
+        return f"{self.firstname} {self.lastname}".title().strip()
+
+    @model_serializer
+    def serialize_model(self):
+        return {
+            "email": self.email,
+            "firstname": self.firstname,
+            "lastname": self.lastname,
+            "is_active": self.is_active,
+            "is_verified": self.is_verified,
+        }
 
     def deactivate(self):
         self.is_active = False
@@ -27,81 +47,93 @@ class Account(SQLModel, table=True):
         return f"{self.firstname.title()} {self.lastname.title()}"
 
 
-class Shop(SQLModel, table=True):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    location: str = Field(index=True)
-    business_id: uuid.UUID = Field(foreign_key="business.id")
-    is_active : bool = True
-    manager_id: int | None = Field(default=None, foreign_key="account.id")
-    manager: Account | None = Relationship()
+class ShopRegistry(SQLModel, table=True):
+    __tablename__ = "shop_registry"
+    __table_args__ = (UniqueConstraint("business_id", "location"),)
 
-    def assign_manager(manager: Account):
-        self.manager = manager
-        self.manager_id = manager.id
-
-    def dismiss_manager():
-        if self.manager:
-            manager = self.manager
-            manager.active = False
-            self.manager = None
-            self.manager_id = None
-
-
-class Registry(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    entity_id: uuid.UUID = Field(unique=True)
-    account_id: int | None = Field(foreign_key="account.id")
-    entity_type: str
-    entity_name: str
-    permissions: str
-    registration_date: datetime = Field(
-        default_factory=partial(datetime.now, tz=config.TIMEZONE)
-    )
+    business_id: uuid.UUID = Field(foreign_key="business.id")
+    shop_id: uuid.UUID = Field(unique=True, default_factory=uuid.uuid4)
+    location: str = Field(index=True)
+    manager_id: int | None = Field(foreign_key="account.id", default=None)
+    permissions: str | None = Field(default=None)
+    assigned: datetime | None
+    deleted: bool = False
+
+    @model_serializer
+    def serialize_model(self):
+        return {
+            "shop_id": self.shop_id,
+            "permissions": permissions.parse_permission_str(self.permissions),
+            "location": self.location,
+            "manager": self.manager,
+        }
 
 
-class Business(SQLModel, table=True):
+class Business(SQLModel, table=True, frozen=True):
+    __table_args__ = (UniqueConstraint("owner_id", "name"),)
+    __hash__ = object.__hash__
+    model_config = ConfigDict(extra='allow')
+
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     name: str = Field(unique=True, index=True)
     owner_id: int = Field(foreign_key="account.id")
     owner: Account = Relationship()
-    shops: list[Shop] = Relationship()
+    registry: list[ShopRegistry] = Relationship(
+        sa_relationship_kwargs={
+            "primaryjoin": "and_(ShopRegistry.business_id == Business.id, ShopRegistry.deleted == False)"
+        }
+    )
+    events : ClassVar[list] = []
+
+    def search_registry(self, shop_id):
+        record = next(record for record in self.registry if record.shop_id == shop_id)
+        return record
 
     def add_shop(self, location: str):
-        shop = Shop(location=location, business_id=self.id)
-        self.shops.append(shop)
-        self.events.append(events.AddedNewShop(self.id, shop.id, shop.location))
-        return shop
-
-    def get_shop(self, shop_id):
-        try:
-            shop = next(shop for shop in self.shops if shop.id == shop_id)
-        except StopIteration:
-            raise ValueError(f"Shop Not Found, {shop_id} in Business {self.id}")
+        shop = ShopRegistry(location=location, business_id=self.id)
+        if any(location == record.location for record in self.registry):
+            raise exceptions.DuplicateShopRecord("Duplicate Shop Location")
+        self.registry.append(ShopRegistry(business_id=self.id, shop_id=shop.shop_id, location=location))
+        self.events.append(events.AddedNewShop(business_id = self.id, shop_id = shop.shop_id, shop_location=shop.location))
         return shop
 
     def remove_shop(self, shop_id: uuid):
-        shop = get_shop(self, shop_id)
-        shops.remove(shop)
-        shop.is_active = False
-        self.events.append(events.RemovedShop(self.id, shop.location))
+        record = self.search_registry(shop_id)
+        record.deleted = True
+        self.events.append(events.RemovedShop(business_id=self.id, location=record.location))
 
-    def assign_shop_manager(
-        self, shop_id: uuid, account: Account
-    ):
-        shop = self.get_shop(shop_id)
-        if shop.manager is not None:
-            self.dismiss_shop_manager(shop=shop)
-        shop.assign_manager(account)
-        self.events.append(events.AssignedNewManager(self.id, account.id))
+    def assign_shop_manager(self, shop_id: uuid, account: Account, permissions: str):
+        record = self.search_registry(shop_id)
+        if shop.manager_id is not None:
+            raise exceptions.ShopAlreadyHasAManager("Shop Already Has A Manager")
+        shop.manager_id = account.id
+        shop.permissions = permissions
+        shop.assigned = datetime.now(config.TIMEZONE)
+        self.events.append(events.AssignedNewManager(business_id=self.id, manager_email=account.email, manager_name=account.full_name, shop_location=record.location, shop_id=shop.id))
 
-    def dismiss_shop_manager(
-        self, shop_id: uuid | None = None, shop: Shop | None = None
-    ):
-        if shop_id and (shop is None):
-            shop = self.get_shop(shop_id)
-        elif not (shop_id or shop):
-            raise ValueError(
-                f"Missing shop_id and shop. Specify either of the shop or the shop_id"
-            )
-        shop.dimiss_manager()
-        self.events.append(events.DismissedManager(self.id, shop.id))
+    def dismiss_shop_manager(self, shop_id: uuid.UUID):
+        record = self.search_registry(shop_id)
+        record.manager_id = None
+        record.permissions = None
+        record.assigned = None
+        self.events.append(events.DismissedManager(business_id=self.id, shop_id=shop.id, shop_location=record.location))
+
+class BusinessRegistry(SQLModel, table=True):
+    __tablename__ = "business_registry"
+    id: int | None = Field(default=None, primary_key=True)
+    business_id: uuid.UUID = Field(foreign_key="business.id", unique=True)
+    owner_id: int = Field(foreign_key="account.id")
+    created: datetime = Field(default_factory=datetime_now_utc)
+
+    business: Business = Relationship()
+
+    @model_serializer
+    def serialize_model(self):
+        return {
+            "business_id": self.business_id,
+            "business_name": self.business.name,
+            "created": self.created,
+        }
+
+

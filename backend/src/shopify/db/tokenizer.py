@@ -1,11 +1,12 @@
 from datetime import datetime, timedelta
 import uuid
 
-from sqlmodel import Session
+from sqlmodel import Session, select
 import pytz
 import jwt
 
 from shopify.db.models import Token
+from shopify.db import events
 from shopify import config
 
 
@@ -15,7 +16,13 @@ class Tokenizer:
         self.events = events
 
     def create(
-        self, email: str, permissions: list[str], business_id: uuid, shop_id: uuid
+        self,
+        email: str,
+        permissions: list[str],
+        business_id: uuid,
+        shop_id: uuid,
+        business_name: str,
+        shop_location: str,
     ):
         current_time = datetime.now(config.TIMEZONE)
         expiry_time = current_time + timedelta(
@@ -23,7 +30,7 @@ class Tokenizer:
         )
         payload = {
             "permissions": permissions,
-            "location": shop_uid,
+            "location": shop_id,
             "target": business_id,
             "sub": email,
             "iat": current_time.timestamp(),
@@ -37,7 +44,9 @@ class Tokenizer:
         )
         token = Token(email, token_str, business_id, shop_id)
         self.events.append(
-            events.CreatedManagerInviteToken(email, business_id, shop_id, token_str)
+            events.CreatedManagerInviteToken(
+                shop_id, business_id, business_name, shop_location, email, token_str
+            )
         )
         self.session.add(token)
         return token
@@ -60,3 +69,7 @@ class Tokenizer:
         else:
             token.decoded = decode_token
             return token
+
+    def fetch(self, business_id:uuid.UUID):
+        invites = self.session.exec(select(Token).where(Token.business_id == business_id)).all()
+        return invites

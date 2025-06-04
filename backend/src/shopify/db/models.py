@@ -2,6 +2,7 @@ from datetime import datetime
 import uuid
 
 from sqlmodel import SQLModel, Field
+from pydantic import ConfigDict
 
 from shopify.config import INVITE_TOKEN_EXPIRATION_SECONDS, TIMEZONE
 
@@ -20,6 +21,8 @@ class Token(SQLModel, table=True):
     TTL: float = Field(default=INVITE_TOKEN_EXPIRATION_SECONDS)
     created: datetime = Field(default_factory=datetime_now_utc)
 
+    model_config = ConfigDict(extra='allow')
+
 
 class AuditLog(SQLModel, table=True):
     __tablename__ = "audit_log"
@@ -29,7 +32,7 @@ class AuditLog(SQLModel, table=True):
     name: str = Field(index=True)
     description: str
     time: float
-    audit_hash: str = Field(unique=True)
+    event_hash: str = Field(unique=True)
     payload: str
 
 
@@ -39,10 +42,10 @@ class AuditLog(SQLModel, table=True):
 # GLOBAL Business SETTINGS
 
 # Setting Map
-id|      name        |
---|------------------|
-1 | LOW LEVEL        |
-2 | CONTROL STRATEGY |
+id|      name        |    tag    |
+--|------------------|-----------|
+1 | LOW LEVEL        | inventory |
+2 | CONTROL STRATEGY | inventory |
 
 
 # BUSINESS WIDE SETTINGS
@@ -62,8 +65,9 @@ setting_id |   shop_id    | value |
 
 class Setting(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    name: str = Field(index=True)
+    name: str = Field(index=True, unique=True)
     tag: str
+    description : str
 
 
 class EntitySetting(SQLModel, table=True):
@@ -83,3 +87,4 @@ class AccountVerification(SQLModel, table=True):
     email: str
     verification_str: str = Field(unique=True, index=True)
     is_valid: bool = True
+    model_config = ConfigDict(extra='allow')
