@@ -39,7 +39,12 @@ class Registry(db.BaseRepo):
             "business": [record.model_dump() for record in business_record],
             "managed_shops": [record.model_dump() for record in managerial_record],
         }
-        for business in records['business']:
-            business_id = business['business_id']
-            business['shops'] = self.session.exec(select(models.ShopRegistry.shop_id).where(models.ShopRegistry.business_id == business_id)).all()
+        for business in records["business"]:
+            business_id = business["business_id"]
+            shops = self.session.exec(
+                select(models.ShopRegistry.shop_id, models.ShopRegistry.location).where(
+                    models.ShopRegistry.business_id == business_id
+                )
+            ).all()
+            business["shops"] = dict((shop[1], shop[0]) for shop in shops)
         return records

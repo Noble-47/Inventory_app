@@ -1,3 +1,4 @@
+from functools import partial
 from datetime import datetime
 import uuid
 
@@ -10,6 +11,8 @@ datetime_now_utc = datetime.now(TIMEZONE)
 
 
 class Token(SQLModel, table=True):
+    model_config = ConfigDict(extra="allow")
+
     id: int | None = Field(default=None, primary_key=True)
     email: str = Field(index=True)
     token_str: str = Field(unique=True)
@@ -19,9 +22,18 @@ class Token(SQLModel, table=True):
     used: bool = False
     expired: bool = False
     TTL: float = Field(default=INVITE_TOKEN_EXPIRATION_SECONDS)
-    created: datetime = Field(default_factory=datetime_now_utc)
+    created: float = Field(default_factory=datetime_now_utc.timestamp)
 
-    model_config = ConfigDict(extra='allow')
+    def check_validity(self):
+        if isinstance(self.created, float):
+            time_lived = abs(self.created - datetime.now(TIMEZONE).timestamp())
+        else:  # isinstance datetime
+            time_lived = (self.created - datetime.now(TIMEZONE)).seconds()
+        if time_lived >= self.TTL:
+            self.expired = True
+            self.is_valid = False
+            return True
+        return False
 
 
 class AuditLog(SQLModel, table=True):
@@ -67,7 +79,7 @@ class Setting(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     name: str = Field(index=True, unique=True)
     tag: str
-    description : str
+    description: str
 
 
 class EntitySetting(SQLModel, table=True):
@@ -87,4 +99,4 @@ class AccountVerification(SQLModel, table=True):
     email: str
     verification_str: str = Field(unique=True, index=True)
     is_valid: bool = True
-    model_config = ConfigDict(extra='allow')
+    model_config = ConfigDict(extra="allow")

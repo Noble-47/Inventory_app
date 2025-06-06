@@ -11,10 +11,17 @@ class Account(db.BaseRepo):
 
     def _create(self, firstname: str, lastname: str, email: str, password: str):
         password_hash = get_password_hash(password)
-        account = models.Account(firstname=firstname, lastname=lastname, email=email, password_hash=password_hash)
+        account = models.Account(
+            firstname=firstname,
+            lastname=lastname,
+            email=email,
+            password_hash=password_hash,
+        )
         self.session.add(account)
         self.events.append(
-            events.NewAccountCreated(email=email, firstname=firstname, lastname=lastname)
+            events.NewAccountCreated(
+                email=email, firstname=firstname, lastname=lastname
+            )
         )
         return account
 
@@ -24,5 +31,10 @@ class Account(db.BaseRepo):
         ).one()
         return account
 
-    def check_email_exists(self, email:str):
-        return self.session.exec(select(models.Account.id).where(models.Account.email == email)).first() is not None
+    def check_email_exists(self, email: str):
+        return (
+            self.session.exec(
+                select(models.Account.id).where(models.Account.email == email)
+            ).first()
+            is not None
+        )

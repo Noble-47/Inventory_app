@@ -14,7 +14,14 @@ class Business(db.BaseRepo):
 
     def _create(self, name: str, owner: models.Account):
         business = models.Business(name=name, owner=owner)
-        self.events.append(events.NewBusinessCreated(business_id=business.id, name=name, owner_email=owner.email, owner_name = owner.fullname))
+        self.events.append(
+            events.NewBusinessCreated(
+                business_id=business.id,
+                name=name,
+                owner_email=owner.email,
+                owner_name=owner.fullname,
+            )
+        )
         self.seen.add(business)
         return business
 
@@ -25,5 +32,12 @@ class Business(db.BaseRepo):
         self.seen.add(business)
         return business
 
-    def check_name_exists(self, owner_id:uuid.UUID, name:str):
-        return self.session.exec(select(models.Business.id).where(models.Business.owner_id == owner_id, models.Business.name == name)).first() is not None
+    def check_name_exists(self, owner_id: uuid.UUID, name: str):
+        return (
+            self.session.exec(
+                select(models.Business.id).where(
+                    models.Business.owner_id == owner_id, models.Business.name == name
+                )
+            ).first()
+            is not None
+        )

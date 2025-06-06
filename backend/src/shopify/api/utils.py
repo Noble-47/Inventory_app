@@ -28,7 +28,9 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
         seconds=config.API_TOKEN_EXPIRATION_SECONDS
     )
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, config.SECRET_KEY, algorithm=config.TOKEN_ALGORITHM)
+    encoded_jwt = jwt.encode(
+        to_encode, config.SECRET_KEY, algorithm=config.TOKEN_ALGORITHM
+    )
     return encoded_jwt
 
 
@@ -40,14 +42,14 @@ profile = {
         "abc-sfs-345": {
             "name": "business_name",
             "shops": ["shop_1.id", "shop_2.id", "shop_3.id"],
-            "created" : "datetime"
+            "created": "datetime",
         }
     },
     "managed_shops": {
-            "bsf-asd-3242-dsdf": {
-                "loc": "some location",
-                "permissions": {"sale": [], "inventory": []},
-            }
+        "bsf-asd-3242-dsdf": {
+            "loc": "some location",
+            "permissions": {"sale": [], "inventory": []},
+        }
     },
 }
 
@@ -64,17 +66,18 @@ def get_account_record(email: str, session: Session):
     account_record.update(records)
     return account_record
 
-def parse_records(records : dict[str, list]):
+
+def parse_records(records: dict[str, list]):
     parsed = {}
-    parsed["business"]  = {}
+    parsed["business"] = {}
     parsed["managed_shops"] = {}
-    for business in records['business']:
+    for business in records["business"]:
         parsed["business"].update(
             {
-                business["business_name"] : {
-                    "id" : business["business_id"],
-                    "shops" : business["shops"],
-                    "created" : business["created"]
+                business["business_name"]: {
+                    "id": business["business_id"],
+                    "shops": business["shops"],
+                    "created": business["created"],
                 }
             }
         )
@@ -82,15 +85,16 @@ def parse_records(records : dict[str, list]):
     for shop in records["managed_shops"]:
         parsed["managed_shops"].update(
             {
-                shop["shop_location"] : {
-                    "id" : shop["id"],
-                    "permissions" : shop["permissions"],
-                    "assigned" : shop["assigned"]
+                shop["location"]: {
+                    "id": shop["shop_id"],
+                    "permissions": shop["permissions"],
+                    "assigned": shop["assigned"],
                 }
             }
         )
 
     return parsed
+
 
 def check_shop_belong_to_business(shop_id, business_id, session):
     shop_db = db.Shop(session)

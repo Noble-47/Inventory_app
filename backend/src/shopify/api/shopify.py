@@ -10,6 +10,7 @@ from shopify import db
 
 from shopify.api.subrouters import shops
 from shopify.api.subrouters import accounts
+from shopify.api.models import InviteAccept
 from shopify.api.subrouters import business
 from shopify.api.dependencies import ActiveUserDep
 
@@ -39,20 +40,29 @@ def on_startup():
     status_code=201,
     tags=["Business"],
 )
-async def create_business(business_name: str, active_user:ActiveUserDep):
+async def create_business(business_name: str, active_user: ActiveUserDep):
     user_email = active_user["email"]
     cmd = commands.CreateBusiness(name=business_name, email=user_email)
     try:
         bus.handle(cmd)
     except exceptions.DuplicateBusinessRecord as e:
         return HTTPException(status_code=400, detail=f"{e}")
-    return {'message' : f'Business : {cmd.name} Created Successfully.'}
+    return {"message": f"Business : {cmd.name} Created Successfully."}
 
 
 @app.post(
-    "/shop/manager/{token:str}",
+    "/shop/manager/accept/",
     tags=["Manager"],
     description="Create manager unverified account",
+    status_code=201,
 )
-async def create_manager(token: str):
-    pass
+async def create_manager(invitee: InviteAccept):
+    cmd = commands.CreateManager(
+        firstname=invitee.firstname,
+        lastname=invitee.lastname,
+        email=invitee.email,
+        token_str=invitee.token_str,
+        password=invitee.password,
+    )
+    bus.handle(cmd)
+    return {"message": "Invitation confirmed, Kindly check your email to proceed"}

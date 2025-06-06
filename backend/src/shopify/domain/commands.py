@@ -15,7 +15,6 @@ class CreateAccount(Command):
 
 
 class VerifyAccount(Command):
-    email: str
     verification_str: str
 
 
@@ -23,18 +22,21 @@ class CreateBusiness(Command):
     name: str
     email: str
 
+
 class UpdateSetting(Command):
-    entity_id : uuid.UUID
-    name : str
-    value : str
+    entity_id: uuid.UUID
+    name: str
+    value: str
+
 
 class AddShop(Command):
     business_id: uuid.UUID
     location: str
 
+
 class RemoveShop(Command):
-    business_id : uuid.UUID
-    shop_id : uuid.UUID
+    business_id: uuid.UUID
+    shop_id: uuid.UUID
 
 
 class CreateAssignmentToken(Command):

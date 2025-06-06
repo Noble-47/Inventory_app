@@ -11,13 +11,13 @@ from shopify.api.dependencies import SessionDep, ActiveUserDep, BusinessIDDep
 from shopify.api.dependencies import verify_current_user_is_business_owner
 
 router = APIRouter(
-    prefix="/business",
     tags=["Business"],
     dependencies=[Depends(verify_current_user_is_business_owner)],
 )
 
+
 @router.get("/{business_name}/profile", response_model=models.BusinessProfile)
-async def business_profile(business_name:str, business_id:BusinessIDDep):
+async def business_profile(business_name: str, business_id: BusinessIDDep):
     business_view = views.business_view(business_id)
     if business_view is None:
         raise HTTPException(status_code=404, detail="Not Found")
@@ -49,10 +49,13 @@ async def business_audit_timeline(business_id: BusinessIDDep, audit_id: int):
 
 
 @router.post("/{business_name}/settings", status_code=201)
-async def setup_business(business_id: BusinessIDDep, setting: list[models.Setting]):
+async def setup_business(business_id: BusinessIDDep, settings: list[models.SettingIn]):
     for setting in settings:
-        cmd = commands.UpdateSetting(business_id, name, value)
+        cmd = commands.UpdateSetting(
+            entity_id=business_id, name=setting.name, value=setting.value
+        )
         bus.handle(cmd)
+    return {"message": "Settings Updated"}
 
 
 @router.post("/{business_name}/add-shop", status_code=201)
@@ -62,14 +65,11 @@ async def add_shop(shop: models.ShopAdd, business_id: BusinessIDDep):
         bus.handle(cmd)
     except exceptions.DuplicateShopRecord:
         return HTTPException(status_code=400, detail="Duplicate Shop")
-    return {'message' : f'New Shop Created : {cmd.location}'}
+    return {"message": f"New Shop Created : {cmd.location}"}
 
 
 @router.post("/{business_name}/delete-shop", status_code=204)
 async def remove_shop(shop: models.ShopRemove, business_id: BusinessIDDep):
     cmd = commands.RemoveShop(business_id=business_id, shop_id=shop.shop_id)
     bus.handle(cmd)
-    return {'message' : f'Delete Shop : {cmd.shop_id}'}
-
-
-#@router.post("/{business_name}/create-
+    return {"message": f"Delete Shop : {cmd.shop_id}"}

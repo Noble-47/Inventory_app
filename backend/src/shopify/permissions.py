@@ -1,3 +1,5 @@
+import json
+
 ALL_PERMISSIONS = {"sale": [], "inventory": [], "stock_port": [], "debt_tracker": []}
 
 # permissions_str = "sale:view_audit sale:view_history inventory:update_quantity"
@@ -23,6 +25,8 @@ def parse_permission_str(permission_str: str):
 
 
 def create_permission_str(permissions: dict[str, list]):
+    if permissions == "*":
+        return "*"
     permission_str = ""
     for header, group in permissions.items():
         group_str = " ".join(f"{header}:{perm}" for perm in group)

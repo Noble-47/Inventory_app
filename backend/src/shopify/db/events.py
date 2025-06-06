@@ -6,7 +6,7 @@ from shopify.domain.events import Event, datetime_now_utc
 
 
 class Event(Event):
-    #event_time = Field(default_factory=datetime_now_utc)
+    # event_time = Field(default_factory=datetime_now_utc)
 
     @property
     def payload(self):

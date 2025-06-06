@@ -9,5 +9,13 @@ from shopify.db import BaseRepo
 
 class Shop(BaseRepo):
 
-    def check_shop_exists(location: str, business_id:uuid.UUID):
-        return self.session.exec(select(ShopRegistry.id).where(ShopRegistry.business_id == business_id, ShopRegistry.location==location)).first() is None
+    def check_shop_exists(location: str, business_id: uuid.UUID):
+        return (
+            self.session.exec(
+                select(ShopRegistry.id).where(
+                    ShopRegistry.business_id == business_id,
+                    ShopRegistry.location == location,
+                )
+            ).first()
+            is None
+        )

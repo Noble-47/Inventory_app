@@ -17,7 +17,9 @@ class EmailNotifier:
             Inventra Team
         """
 
-    def parse_invitation_message(self, invitation_token, firstname, lastname, business_name):
+    def parse_invitation_message(
+        self, invitation_token, firstname, lastname, business_name
+    ):
         return f"""
             Hi { firstname } { lastname or ""}
 
@@ -35,11 +37,15 @@ class EmailNotifier:
             The Inventra Team
         """
 
-    def send_verification_token(self, token:str, firstname: str, lastname:str, email: str):
+    def send_verification_token(
+        self, token: str, firstname: str, lastname: str, email: str
+    ):
         message = self.parse_verification_message(token, firstname, lastname)
         self.send(message, email)
 
-    def send_invitation_token(self, token: str, firstname:str, lastname:str, email: str, business_name:str):
+    def send_invitation_token(
+        self, token: str, firstname: str, lastname: str, email: str, business_name: str
+    ):
         message = self.parse_invitation_message(message)
         self.send(message, email)
 

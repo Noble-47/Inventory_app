@@ -15,7 +15,7 @@ class Audit:
 
     def add(self, event: events.Event):
         serialized_event = event.serialize()
-        serialized_event['payload'] = json.dumps(serialized_event['payload'])
+        serialized_event["payload"] = json.dumps(serialized_event["payload"])
         audit = AuditLog(**serialized_event)
         self.session.add(audit)
 

@@ -30,8 +30,14 @@ class AccountVerifier(db.BaseRepo):
             payload, key=config.SECRET_KEY, algorithm=config.TOKEN_ALGORITHM
         )
 
-        verification = AccountVerification(email=email, verification_str=verification_str)
-        self.events.append(events.VerificationTokenCreated(email=email, verification_str=verification_str))
+        verification = AccountVerification(
+            email=email, verification_str=verification_str
+        )
+        self.events.append(
+            events.VerificationTokenCreated(
+                email=email, verification_str=verification_str
+            )
+        )
         return verification
 
     def _get(self, verification_str: str):
@@ -45,7 +51,9 @@ class AccountVerifier(db.BaseRepo):
             return None
         try:
             decoded = jwt.decode(
-                verification.verification_str, config.SECRET_KEY, algorithm=config.TOKEN_ALGORITHM
+                verification.verification_str,
+                config.SECRET_KEY,
+                algorithm=config.TOKEN_ALGORITHM,
             )
         except jwt.ExpiredSignatureError:
             verification.invalid_cause = "Expired Token"
@@ -54,7 +62,7 @@ class AccountVerifier(db.BaseRepo):
         else:
             verification.decoded = decoded
         finally:
-            if hasattr(verification, 'invalid_cause'):
+            if hasattr(verification, "invalid_cause"):
                 verification.is_valid = False
                 print(verification.invalid_cause)
             return verification

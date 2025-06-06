@@ -28,33 +28,39 @@ class BaseRepo:
         self.session.add(obj)
         return obj
 
+
 @event.listens_for(Token, "load")
 def check_token_has_expired(target, context):
     token = target
-    time_lived = (token.created - datetime.now(config.TIMEZONE)).seconds
-    if time_lived >= token.ttl:
-        token.expired = True
-        token.is_valid = False
+    time_lived = abs(token.created - datetime.now(config.TIMEZONE).timestamp())
+    token.check_validity()
+    token.created = datetime.fromtimestamp(token.created, config.TIMEZONE)
     return token
 
 
 def create_default_settings(engine):
     with engine.connect() as conn:
-        conn.execute(text(
-            """
+        conn.execute(
+            text(
+                """
             INSERT INTO setting (name, tag, description)
             VALUES (:name, :tag, :description)
             ON CONFLICT(name)
             DO NOTHING
             """
-        ), config.DEFAULT_SETTINGS)
+            ),
+            config.DEFAULT_SETTINGS,
+        )
         conn.commit()
 
+
 engine = create_engine(config.DATABASE_URL)
+
 
 def create_tables():
     SQLModel.metadata.create_all(engine)
     create_default_settings(engine)
+
 
 def db_session():
     with Session(engine) as session:

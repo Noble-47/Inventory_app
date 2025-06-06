@@ -17,7 +17,8 @@ router = APIRouter(prefix="/accounts", tags=["Accounts"])
 
 # perform all authentication here
 
-def get_access_token(email:str, password:str, session):
+
+def get_access_token(email: str, password: str, session):
     user = utils.authenticate_user(session, email, password)
     if not user:
         raise HTTPException(
@@ -42,12 +43,12 @@ async def register(account: models.AccountCreate):
     except Exception as e:
         print(e.__class__)
         raise HTTPException(status_code=400, detail=f"{e}")
-    return {'message' : f'Verification link has been sent to {cmd.email}'}
+    return {"message": f"Verification link has been sent to {cmd.email}"}
 
 
 @router.get("/verification/{token}", status_code=200)
-async def verify(email: EmailStr, token: str):
-    cmd = commands.VerifyAccount(email=email, verification_str=token)
+async def verify(token: str):
+    cmd = commands.VerifyAccount(verification_str=token)
     try:
         bus.handle(cmd)
     except exceptions.VerificationError as err:
@@ -55,25 +56,28 @@ async def verify(email: EmailStr, token: str):
     except Exception as e:
         print(e.__class__)
         raise HTTPException(status_code=400, detail=f"{e}")
-    return {'message' : f'Verification successful'}
+    return {"message": f"Verification successful"}
 
 
 @router.post("/token")
 async def login_for_access_token(
- session: SessionDep, form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+    session: SessionDep,
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
 ) -> models.Token:
     token = get_access_token(form_data.username, form_data.password, session)
     return token
 
 
 @router.post("/auth")
-async def login_for_token(session: SessionDep, login:models.Login) -> models.Token:
+async def login_for_token(session: SessionDep, login: models.Login) -> models.Token:
     token = get_access_token(login.email, login.password, session)
     return token
 
+
 @router.get("/profile")
-async def user_profile(active_user:ActiveUserDep):
+async def user_profile(active_user: ActiveUserDep):
     return models.Profile(**active_user)
+
 
 async def logout():
     pass

@@ -9,10 +9,11 @@ from pydantic import model_serializer, ConfigDict
 
 from shopify import config
 from shopify import exceptions
-from shopify import permissions
+from shopify import permissions as permissions_mod
 from shopify.domain import events
 
 datetime_now_utc = partial(datetime.now, config.TIMEZONE)
+
 
 class Account(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
@@ -20,6 +21,7 @@ class Account(SQLModel, table=True):
     lastname: str
     email: str = Field(index=True, unique=True)
     password_hash: str
+    type: str = Field(default="manager", alias="type")
     is_active: bool = True
     is_verified: bool = False
 
@@ -60,20 +62,23 @@ class ShopRegistry(SQLModel, table=True):
     assigned: datetime | None
     deleted: bool = False
 
+    manager: Account = Relationship()
+
     @model_serializer
     def serialize_model(self):
         return {
             "shop_id": self.shop_id,
-            "permissions": permissions.parse_permission_str(self.permissions),
+            "permissions": permissions_mod.parse_permission_str(self.permissions),
             "location": self.location,
-            "manager": self.manager,
+            "manager": self.manager.fullname,
+            "assigned": self.assigned,
         }
 
 
 class Business(SQLModel, table=True, frozen=True):
     __table_args__ = (UniqueConstraint("owner_id", "name"),)
     __hash__ = object.__hash__
-    model_config = ConfigDict(extra='allow')
+    model_config = ConfigDict(extra="allow")
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     name: str = Field(unique=True, index=True)
@@ -84,7 +89,7 @@ class Business(SQLModel, table=True, frozen=True):
             "primaryjoin": "and_(ShopRegistry.business_id == Business.id, ShopRegistry.deleted == False)"
         }
     )
-    events : ClassVar[list] = []
+    events: ClassVar[list] = []
 
     def search_registry(self, shop_id):
         record = next(record for record in self.registry if record.shop_id == shop_id)
@@ -94,30 +99,51 @@ class Business(SQLModel, table=True, frozen=True):
         shop = ShopRegistry(location=location, business_id=self.id)
         if any(location == record.location for record in self.registry):
             raise exceptions.DuplicateShopRecord("Duplicate Shop Location")
-        self.registry.append(ShopRegistry(business_id=self.id, shop_id=shop.shop_id, location=location))
-        self.events.append(events.AddedNewShop(business_id = self.id, shop_id = shop.shop_id, shop_location=shop.location))
+        self.registry.append(
+            ShopRegistry(business_id=self.id, shop_id=shop.shop_id, location=location)
+        )
+        self.events.append(
+            events.AddedNewShop(
+                business_id=self.id, shop_id=shop.shop_id, shop_location=shop.location
+            )
+        )
         return shop
 
     def remove_shop(self, shop_id: uuid):
         record = self.search_registry(shop_id)
         record.deleted = True
-        self.events.append(events.RemovedShop(business_id=self.id, location=record.location))
+        self.events.append(
+            events.RemovedShop(business_id=self.id, location=record.location)
+        )
 
     def assign_shop_manager(self, shop_id: uuid, account: Account, permissions: str):
         record = self.search_registry(shop_id)
-        if shop.manager_id is not None:
+        if record.manager_id is not None:
             raise exceptions.ShopAlreadyHasAManager("Shop Already Has A Manager")
-        shop.manager_id = account.id
-        shop.permissions = permissions
-        shop.assigned = datetime.now(config.TIMEZONE)
-        self.events.append(events.AssignedNewManager(business_id=self.id, manager_email=account.email, manager_name=account.full_name, shop_location=record.location, shop_id=shop.id))
+        record.manager_id = account.id
+        record.permissions = permissions_mod.create_permission_str(permissions)
+        record.assigned = datetime.now(config.TIMEZONE)
+        self.events.append(
+            events.AssignedNewManager(
+                business_id=self.id,
+                manager_email=account.email,
+                manager_name=account.fullname,
+                shop_location=record.location,
+                shop_id=record.shop_id,
+            )
+        )
 
     def dismiss_shop_manager(self, shop_id: uuid.UUID):
         record = self.search_registry(shop_id)
         record.manager_id = None
         record.permissions = None
         record.assigned = None
-        self.events.append(events.DismissedManager(business_id=self.id, shop_id=shop.id, shop_location=record.location))
+        self.events.append(
+            events.DismissedManager(
+                business_id=self.id, shop_id=shop.id, shop_location=record.location
+            )
+        )
+
 
 class BusinessRegistry(SQLModel, table=True):
     __tablename__ = "business_registry"
@@ -135,5 +161,3 @@ class BusinessRegistry(SQLModel, table=True):
             "business_name": self.business.name,
             "created": self.created,
         }
-
-

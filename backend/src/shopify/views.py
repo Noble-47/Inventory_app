@@ -26,7 +26,7 @@ def business_view(business_id: uuid.UUID):
 
 def shop_view(shop_id: uuid.UUID):
     session = next(db.db_session())
-    shop = session.exec(select(ShopView).where(ShopView.shop_id == shop_id))
+    shop = session.exec(select(ShopView).where(ShopView.shop_id == shop_id)).first()
     return shop.model_dump()
 
 
@@ -67,7 +67,7 @@ def shop_settings(shop_id: uuid.UUID):
     setting_db = db.Setting(session)
     settings = setting_db.fetch(shop_id)
     view = {}
-    view["id"] = business_id
+    view["id"] = shop_id
     view["settings"] = [
         {"name": setting.name, "value": setting.value, "tag": setting.tag, "description" : setting.description}
         for setting in settings
@@ -84,17 +84,35 @@ def business_invites(business_id: uuid.UUID):
     view["id"] = business_id
     view["shops"] = [
         {
-            "shop_id": invite.shop_id,
+            "id": invite.shop_id,
             "invite": {
                 "for": invite.email,
                 "created": invite.created,
                 "used": invite.used,
                 "expired": invite.expired,
+                "token" : invite.token_str
             },
         }
         for invite in invites
     ]
     return view
+
+def shop_invite(shop_id:uuid.UUID):
+    session = next(db.db_session())
+    token_db = db.Tokenizer(session)
+    invite = token_db.get_shop_invite(shop_id)
+    if invite:
+        return {
+            'id' : shop_id,
+            'invite' : {
+                'for' : invite.email,
+                'created' : invite.created,
+                'used' : invite.used,
+                'expired' : invite.expired,
+                'token' : invite.token_str
+            }
+        }
+    return None
 
 
 ## View history

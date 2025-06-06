@@ -23,21 +23,29 @@ class SettingDB:
         if id:
             return self.session.exec(select(Setting.tag).where(Setting.id == id)).one()
 
-    def set(self, name: str, value: str | int, entity_id: uuid.UUID, entity_type:str):
+    def set(self, name: str, value: str | int, entity_id: uuid.UUID, entity_type: str):
         setting_id = self.get_setting_id(name)
         entity = self.session.exec(
-            select(EntitySetting).where(EntitySetting.entity_id == entity_id, EntitySetting.setting_id == setting_id)
+            select(EntitySetting).where(
+                EntitySetting.entity_id == entity_id,
+                EntitySetting.setting_id == setting_id,
+            )
         ).first()
         if entity:
             entity.value = str(value)
         else:
             # create new entry
-            entity = EntitySetting(setting_id=setting_id, entity_id=entity_id, value=str(value), entity_type=entity_type)
+            entity = EntitySetting(
+                setting_id=setting_id,
+                entity_id=entity_id,
+                value=str(value),
+                entity_type=entity_type,
+            )
         self.events.append(
             events.SettingUpdated(
                 tag=self.get_tag(id=setting_id),
                 entity_id=entity_id,
-                entity_type = entity_type,
+                entity_type=entity_type,
                 value=value,
             )
         )
