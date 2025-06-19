@@ -15,9 +15,11 @@ class Token(SQLModel, table=True):
 
     id: int | None = Field(default=None, primary_key=True)
     email: str = Field(index=True)
+    permissions: str
     token_str: str = Field(unique=True)
     business_id: uuid.UUID
     shop_id: uuid.UUID
+    shop_location: str
     is_valid: bool = True
     used: bool = False
     expired: bool = False

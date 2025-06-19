@@ -31,7 +31,7 @@ def inject_event_handlers(uow, notifier):
         events.NewBusinessCreated: [
             partial(handlers.log_audit, uow=uow),
             partial(handlers.add_business_to_views, uow=uow),
-            partial(handlers.setup_new_business, uow=uow)
+            partial(handlers.setup_new_business, uow=uow),
         ],
         events.AddedNewShop: [
             partial(handlers.log_audit, uow=uow),
@@ -41,8 +41,14 @@ def inject_event_handlers(uow, notifier):
             partial(handlers.log_audit, uow=uow),
             partial(handlers.remove_shop_from_views, uow=uow),
         ],
-        events.AssignedNewManager: [partial(handlers.log_audit, uow=uow)],
-        events.DismissedManager: [partial(handlers.log_audit, uow=uow)],
+        events.AssignedNewManager: [
+            partial(handlers.log_audit, uow=uow),
+            partial(handlers.add_manager_to_shop_view, uow=uow),
+        ],
+        events.DismissedManager: [
+            partial(handlers.log_audit, uow=uow),
+            partial(handlers.remove_manager_from_shop_view, uow=uow),
+        ],
         events.CreatedManagerInviteToken: [partial(handlers.log_audit, uow=uow)],
         db_events.NewAccountCreated: [
             partial(

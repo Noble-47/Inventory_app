@@ -9,13 +9,21 @@ from shopify import db
 
 class Account(db.BaseRepo):
 
-    def _create(self, firstname: str, lastname: str, email: str, password: str):
+    def _create(
+        self,
+        firstname: str,
+        lastname: str,
+        email: str,
+        password: str,
+        account_type: str | None = None,
+    ):
         password_hash = get_password_hash(password)
         account = models.Account(
             firstname=firstname,
             lastname=lastname,
             email=email,
             password_hash=password_hash,
+            account_type=account_type,
         )
         self.session.add(account)
         self.events.append(

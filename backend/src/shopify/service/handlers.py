@@ -20,10 +20,8 @@ def create_account(command: commands.CreateAccount, uow: UnitOfWork):
             command.lastname,
             command.email,
             command.password,
-            type="owner",
         )
         uow.commit()
-    return account
 
 
 def verify_account(command: commands.VerifyAccount, uow: UnitOfWork):
@@ -39,7 +37,6 @@ def verify_account(command: commands.VerifyAccount, uow: UnitOfWork):
             account.is_verified = True
             verification.is_valid = False
         uow.commit()
-    return verification
 
 
 def create_business(command: commands.CreateBusiness, uow: UnitOfWork):
@@ -51,22 +48,20 @@ def create_business(command: commands.CreateBusiness, uow: UnitOfWork):
                 f"You already have a business with the name, {command.name}"
             )
         business = uow.business.create(name=command.name, owner=owner)
+        owner.account_type = "business_owner"
         uow.registry.create(
             business_id=business.id,
             owner_id=owner.id,
         )
         uow.commit()
-    return business
 
 
 def add_shop(command: commands.AddShop, uow: UnitOfWork):
     """Add shop to business."""
     with uow:
         business = uow.business.get(command.business_id)
-        # shop = uow.shop.create(command.location)
         shop = business.add_shop(command.location)
         uow.commit()
-    return shop
 
 
 def remove_shop(command: commands.RemoveShop, uow: UnitOfWork):
@@ -87,36 +82,41 @@ def create_assignment_token(command: commands.CreateAssignmentToken, uow: UnitOf
             command.permissions,
             command.business_id,
             shop.shop_id,
-            business.name,
             shop.location,
+            business.name,
         )
         uow.commit()
-    return token
 
 
 def create_manager(command: commands.CreateManager, uow: UnitOfWork):
     """Create manager account and assign as shop manager."""
     with uow:
-        token = uow.tokenizer.get(command.token_str)
+        token = uow.tokenizer.get(token_str=command.token_str, email=command.email)
         if token is None:
-            raise ValueError("Invalid Token")
+            raise exceptions.InvalidInvite("Invalid Token")
         elif token.email != command.email:
-            raise ValueError("Email Does Not Match")
+            raise exceptions.InvalidInvite("Email Does Not Match")
         elif token.is_valid:
-            account = uow.accounts.create(
-                command.firstname, command.lastname, command.email, command.password
-            )
+            if uow.accounts.check_email_exists(command.email):
+                account = uow.accounts.get(command.email)
+            else:
+                account = uow.accounts.create(
+                    command.firstname,
+                    command.lastname,
+                    command.email,
+                    command.password,
+                    account_type="shop_manager",
+                )
             business = uow.business.get(token.business_id)
             business.assign_shop_manager(
-                token.shop_id, account, permissions=token.decoded["permissions"]
+                token.shop_id, account, permissions=token.permissions
             )
             token.is_valid = False
             token.used = True
             uow.commit()
         else:
             uow.commit()
-            raise ValueError("Token is no more valid.")
-    return account
+            raise ValueError("Token Is No Longer Valid.")
 
 
 def assign_shop_manager(command: commands.AssignManager, uow: UnitOfWork):
@@ -125,30 +125,30 @@ def assign_shop_manager(command: commands.AssignManager, uow: UnitOfWork):
         account = uow.accounts.get(command.account_id)
         business = uow.business.get(token.business_id)
         shop = uow.shops.get(command.shop_id)
-        manager = business.assign_shop_manager(command.shop_id, account)
+        business.assign_shop_manager(command.shop_id, account)
         uow.commit()
-    return manager
 
 
 def dismiss_shop_manager(command: commands.DismissManager, uow: UnitOfWork):
     """Dismiss current shop manager."""
     with uow:
-        business = uow.business.get(command.busines_id)
+        business = uow.business.get(command.business_id)
         business.dismiss_shop_manager(command.shop_id)
-        # registry = uow.registry.get(entity_id=command.shop_id)
-        # registry.account_id = None
         uow.commit()
 
 
 def update_setting(command: commands.UpdateSetting, uow: UnitOfWork):
     """Update business setting."""
     with uow:
-        uow.settings.set(
-            name=command.name,
-            value=command.value,
-            entity_id=command.entity_id,
-            entity_type="business",
-        )
+        try:
+            uow.settings.set(
+                name=command.name,
+                value=command.value,
+                entity_id=command.entity_id,
+                entity_type="business",
+            )
+        except ValueError as err:
+            raise exceptions.InvalidSettingKey(str(err))
         uow.session.commit()
 
 
@@ -198,6 +198,20 @@ def remove_shop_from_views(event: events.RemovedShop, uow: UnitOfWork):
         uow.commit()
 
 
+def add_manager_to_shop_view(event: events.AssignedNewManager, uow: UnitOfWork):
+    with uow:
+        uow.views.add_manager_to_shop(
+            event.shop_id, event.manager_name, event.manager_email
+        )
+        uow.commit()
+
+
+def remove_manager_from_shop_view(event: events.DismissedManager, uow: UnitOfWork):
+    with uow:
+        uow.views.remove_manager_from_shop(event.shop_id)
+        uow.commit()
+
+
 def create_and_send_verification_token(
     event: db_events.NewAccountCreated, notifier: EmailNotifier, uow: UnitOfWork
 ):
@@ -221,12 +235,4 @@ COMMAND_HANDLERS = {
     commands.AssignManager: [assign_shop_manager],
     commands.DismissManager: [dismiss_shop_manager],
     commands.UpdateSetting: [update_setting],
-}
-
-EVENT_HANDLERS = {
-    events.AddedNewShop: [log_audit],
-    events.RemovedShop: [log_audit],
-    events.AssignedNewManager: [log_audit],
-    events.DismissedManager: [log_audit],
-    events.CreatedManagerInviteToken: [log_audit],
 }

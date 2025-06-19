@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from shopify.domain import commands
 from shopify.api import models
+from shopify import exceptions
 from shopify.api import bus
 from shopify import views
 
@@ -50,11 +51,17 @@ async def business_audit_timeline(business_id: BusinessIDDep, audit_id: int):
 
 @router.post("/{business_name}/settings", status_code=201)
 async def setup_business(business_id: BusinessIDDep, settings: list[models.SettingIn]):
+    errors = []
     for setting in settings:
         cmd = commands.UpdateSetting(
             entity_id=business_id, name=setting.name, value=setting.value
         )
-        bus.handle(cmd)
+        try:
+            bus.handle(cmd)
+        except exceptions.InvalidSettingKey as err:
+            errors.append({'name' : setting.name, 'error' : "Not supported"})
+    if errors:
+        return errors
     return {"message": "Settings Updated"}
 
 

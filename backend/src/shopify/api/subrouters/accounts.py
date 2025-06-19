@@ -74,9 +74,22 @@ async def login_for_token(session: SessionDep, login: models.Login) -> models.To
     return token
 
 
-@router.get("/profile")
+@router.get("/profile", response_model_exclude_none=True, response_model=models.Profile)
 async def user_profile(active_user: ActiveUserDep):
-    return models.Profile(**active_user)
+    profile = {
+        'firstname' : active_user['firstname'],
+        'lastname' : active_user['lastname'],
+        'email' : active_user['email'],
+        'account_type' : active_user['account_type'],
+        'is_active' : active_user['is_active'],
+        'is_verified' : active_user['is_verified']
+    }
+
+    if active_user['account_type'] == 'business_owner':
+        profile['business'] = [{'name' : k, 'id' : v['id'], 'shops' : v['shops'], 'created' : v['created']} for k,v in active_user['business'].items()]
+    if active_user['account_type'] == 'shop_manager':
+        profile['managed_shops'] = [{'location' : k, 'id' : v['id'], 'permissions' : v['permissions'], 'assigned' : v['assigned']} for k,v in active_user['managed_shops'].items()]
+    return models.Profile(**profile)
 
 
 async def logout():

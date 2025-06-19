@@ -1,13 +1,22 @@
+from typing import Union, Optional
 from datetime import datetime
 import uuid
 
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
 
 
+class PermissionModel(BaseModel):
+    sales: list[str]
+    inventory: list[str]
+    stock_port: list[str]
+    debt_tracker: list[str]
+
+
 class Account(BaseModel):
     firstname: str
     lastname: str
     email: EmailStr
+    account_type: str | None = Field(default=None)
 
 
 class AccountCreate(Account):
@@ -15,12 +24,14 @@ class AccountCreate(Account):
 
 
 class AccountBusinessProfile(BaseModel):
+    name: str
     id: uuid.UUID
     shops: dict[str, uuid.UUID]
     created: datetime
 
 
 class AccountShopProfile(BaseModel):
+    location: str
     id: uuid.UUID
     permissions: dict[str, list]
     assigned: datetime
@@ -29,8 +40,8 @@ class AccountShopProfile(BaseModel):
 class Profile(Account):
     is_active: bool
     is_verified: bool
-    business: dict[str, AccountBusinessProfile]
-    managed_shops: dict[str, AccountShopProfile]
+    business: None | list[AccountBusinessProfile] = Field(default=None)
+    managed_shops: None | list[AccountShopProfile] = Field(default=None)
 
 
 class Token(BaseModel):
@@ -78,7 +89,12 @@ class ShopSetting(EntitySetting):
 
 
 class BusinessSetting(EntitySetting):
-    shops: list[ShopSetting]
+    pass
+
+
+class CreateInviteToken(BaseModel):
+    email: str
+    permissions: Union[str, dict[str, list[str]]]
 
 
 class Invite(BaseModel):
@@ -91,6 +107,7 @@ class Invite(BaseModel):
 
 class ShopInvite(BaseModel):
     id: uuid.UUID
+    location: str
     invite: Invite
 
 
@@ -133,8 +150,3 @@ class ShopAdd(BaseModel):
 
 class ShopRemove(BaseModel):
     shop_id: uuid.UUID
-
-
-class CreateInviteToken(BaseModel):
-    email: str
-    permissions: str | dict[str, list[str]]

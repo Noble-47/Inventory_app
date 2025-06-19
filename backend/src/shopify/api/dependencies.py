@@ -43,7 +43,7 @@ async def get_current_user(
 
 
 async def get_current_active_user(
-    current_user: Annotated[dict[str, Any], Depends(get_current_user)]
+    current_user: Annotated[dict[str, Any], Depends(get_current_user)],
 ):
     if not current_user.get("is_active"):
         raise HTTPException(status_code=400, detail="Inactive User")

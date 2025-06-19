@@ -4,7 +4,13 @@ from sqlalchemy import event, text
 
 from shopify import config
 from shopify.domain.read_models import BusinessView, ShopView
-from shopify.domain.models import Account, Business, BusinessRegistry, ShopRegistry
+from shopify.domain.models import (
+    Account,
+    Business,
+    BusinessRegistry,
+    ShopRegistry,
+    ManagerRegistry,
+)
 from shopify.db.models import (
     Token,
     AccountVerification,
@@ -32,9 +38,8 @@ class BaseRepo:
 @event.listens_for(Token, "load")
 def check_token_has_expired(target, context):
     token = target
-    time_lived = abs(token.created - datetime.now(config.TIMEZONE).timestamp())
     token.check_validity()
-    token.created = datetime.fromtimestamp(token.created, config.TIMEZONE)
+    # token.created = datetime.fromtimestamp(token.created, config.TIMEZONE)
     return token
 
 

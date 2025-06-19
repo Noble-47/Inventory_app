@@ -43,7 +43,7 @@ class CreateAssignmentToken(Command):
     business_id: uuid.UUID
     shop_id: uuid.UUID
     email: str
-    permissions: list[str]
+    permissions: str | dict[str, list[str]]
 
 
 class CreateManager(CreateAccount):

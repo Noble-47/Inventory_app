@@ -21,7 +21,7 @@ class Account(SQLModel, table=True):
     lastname: str
     email: str = Field(index=True, unique=True)
     password_hash: str
-    type: str = Field(default="manager", alias="type")
+    account_type: str | None = Field(default=None, alias="type")
     is_active: bool = True
     is_verified: bool = False
 
@@ -37,6 +37,7 @@ class Account(SQLModel, table=True):
             "lastname": self.lastname,
             "is_active": self.is_active,
             "is_verified": self.is_verified,
+            "account_type": self.account_type,
         }
 
     def deactivate(self):
@@ -49,6 +50,30 @@ class Account(SQLModel, table=True):
         return f"{self.firstname.title()} {self.lastname.title()}"
 
 
+class ManagerRegistry(SQLModel, table=True):
+    __tablename__ = "managers"
+
+    id: int | None = Field(default=None, primary_key=True)
+    shop_id: uuid.UUID = Field(foreign_key="shop_registry.shop_id")
+    business_id: uuid.UUID = Field(foreign_key="business.id")
+    manager_id: int = Field(foreign_key="account.id")
+    is_active: bool = True
+    permissions: str | None = Field(default=None)
+    assigned: datetime | None
+
+    account: Account = Relationship(
+        sa_relationship_kwargs={"overlaps": "manager_id, shop_registry"}
+    )
+
+    @property
+    def fullname(self):
+        return str(self.account)
+
+    @property
+    def email(self):
+        return self.account.email
+
+
 class ShopRegistry(SQLModel, table=True):
     __tablename__ = "shop_registry"
     __table_args__ = (UniqueConstraint("business_id", "location"),)
@@ -58,11 +83,12 @@ class ShopRegistry(SQLModel, table=True):
     shop_id: uuid.UUID = Field(unique=True, default_factory=uuid.uuid4)
     location: str = Field(index=True)
     manager_id: int | None = Field(foreign_key="account.id", default=None)
-    permissions: str | None = Field(default=None)
-    assigned: datetime | None
     deleted: bool = False
+    created: datetime = Field(default_factory=datetime_now_utc)
 
-    manager: Account = Relationship()
+    manager: Account = Relationship(
+        link_model=ManagerRegistry, sa_relationship_kwargs={"overlaps": "account"}
+    )
 
     @model_serializer
     def serialize_model(self):
@@ -89,10 +115,16 @@ class Business(SQLModel, table=True, frozen=True):
             "primaryjoin": "and_(ShopRegistry.business_id == Business.id, ShopRegistry.deleted == False)"
         }
     )
+    managers: list[ManagerRegistry] = Relationship()
     events: ClassVar[list] = []
 
     def search_registry(self, shop_id):
-        record = next(record for record in self.registry if record.shop_id == shop_id)
+        try:
+            record = next(
+                record for record in self.registry if record.shop_id == shop_id
+            )
+        except StopIteration:
+            raise exceptions.ShopNotFound("No Record Found")
         return record
 
     def add_shop(self, location: str):
@@ -116,13 +148,37 @@ class Business(SQLModel, table=True, frozen=True):
             events.RemovedShop(business_id=self.id, location=record.location)
         )
 
-    def assign_shop_manager(self, shop_id: uuid, account: Account, permissions: str):
+    def get_or_create_manager(self, manager_id, shop_id):
+        try:
+            return next(
+                record
+                for record in self.managers
+                if record.manager_id == manager_id and record.shop_id == shop_id
+            )
+        except StopIteration:
+            manager_record = ManagerRegistry(manager_id=manager_id, shop_id=shop_id)
+            self.managers.append(manager_record)
+            return manager_record
+
+    def get_manager(self, shop_id: uuid.UUID):
+        try:
+            return next(
+                record
+                for record in self.managers
+                if record.shop_id == shop_id and record.is_active
+            )
+        except StopIteration:
+            raise exceptions.NoActiveManager("No Active Manager")
+
+    def assign_shop_manager(self, shop_id: uuid, account: int, permissions: str):
         record = self.search_registry(shop_id)
         if record.manager_id is not None:
-            raise exceptions.ShopAlreadyHasAManager("Shop Already Has A Manager")
-        record.manager_id = account.id
-        record.permissions = permissions_mod.create_permission_str(permissions)
-        record.assigned = datetime.now(config.TIMEZONE)
+            raise exceptions.ShopAlreadyHasManager("Shop Already Has A Manager")
+        manager = self.get_or_create_manager(account.id, shop_id)
+        record.manager_id = manager.manager_id
+        manager.permissions = permissions_mod.create_permission_str(permissions)
+        manager.assigned = datetime.now(config.TIMEZONE)
+        manager.is_active = True
         self.events.append(
             events.AssignedNewManager(
                 business_id=self.id,
@@ -134,13 +190,13 @@ class Business(SQLModel, table=True, frozen=True):
         )
 
     def dismiss_shop_manager(self, shop_id: uuid.UUID):
-        record = self.search_registry(shop_id)
-        record.manager_id = None
-        record.permissions = None
-        record.assigned = None
+        shop = self.search_registry(shop_id)
+        record = self.get_manager(shop_id)
+        record.is_active = False
+        shop.manager_id = None
         self.events.append(
             events.DismissedManager(
-                business_id=self.id, shop_id=shop.id, shop_location=record.location
+                business_id=self.id, shop_id=shop.shop_id, shop_location=shop.location
             )
         )
 

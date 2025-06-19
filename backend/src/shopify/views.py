@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from datetime import datetime
 import uuid
 import json
@@ -27,7 +28,8 @@ def business_view(business_id: uuid.UUID):
 def shop_view(shop_id: uuid.UUID):
     session = next(db.db_session())
     shop = session.exec(select(ShopView).where(ShopView.shop_id == shop_id)).first()
-    return shop.model_dump()
+    if shop:
+        return shop.model_dump()
 
 
 ## view settings
@@ -37,11 +39,17 @@ def business_settings(business_id: uuid.UUID):
     settings = setting_db.fetch(business_id)
     view = {}
     view["id"] = business_id
-    view["shops"] = []
+    # view["shops"] = []
     view["settings"] = [
-        {"name": setting.name, "value": setting.value, "tag": setting.tag, "description" : setting.description}
+        {
+            "name": setting.name,
+            "value": setting.value,
+            "tag": setting.tag,
+            "description": setting.description,
+        }
         for setting in settings
     ]
+    """
     shops = session.exec(
         select(ShopView.shop_id).where(ShopView.business_id == business_id)
     ).all()
@@ -59,19 +67,47 @@ def business_settings(business_id: uuid.UUID):
                     for setting in shop_settings
                 ],
         })
+    """
     return view
+
+
+@dataclass
+class SettingViewModel:
+    name: str
+    value: str
+    tag: str
+    description: str
+
+    def __hash__(self):
+        return hash(self.name)
+
+    def __eq__(self, other):
+        if isinstance(other, self.__class__):
+            return self.name == other.name
+        return NotImplemented
 
 
 def shop_settings(shop_id: uuid.UUID):
     session = next(db.db_session())
-    setting_db = db.Setting(session)
-    settings = setting_db.fetch(shop_id)
     view = {}
     view["id"] = shop_id
-    view["settings"] = [
-        {"name": setting.name, "value": setting.value, "tag": setting.tag, "description" : setting.description}
-        for setting in settings
+    business_id = db.Registry(session).get_shop_parent(shop_id)
+    global_settings = [
+        SettingViewModel(**setting)
+        for setting in business_settings(business_id)["settings"]
     ]
+    setting_db = db.Setting(session)
+    shop_settings = {
+        SettingViewModel(
+            name=setting.name,
+            value=setting.value,
+            tag=setting.tag,
+            description=setting.description,
+        )
+        for setting in setting_db.fetch(shop_id)
+    }
+    shop_settings.update(global_settings)
+    view["settings"] = list(shop_settings)
     return view
 
 
@@ -85,32 +121,35 @@ def business_invites(business_id: uuid.UUID):
     view["shops"] = [
         {
             "id": invite.shop_id,
+            "location": invite.shop_location,
             "invite": {
                 "for": invite.email,
                 "created": invite.created,
                 "used": invite.used,
                 "expired": invite.expired,
-                "token" : invite.token_str
+                "token": invite.token_str,
             },
         }
         for invite in invites
     ]
     return view
 
-def shop_invite(shop_id:uuid.UUID):
+
+def shop_invite(shop_id: uuid.UUID):
     session = next(db.db_session())
     token_db = db.Tokenizer(session)
     invite = token_db.get_shop_invite(shop_id)
     if invite:
         return {
-            'id' : shop_id,
-            'invite' : {
-                'for' : invite.email,
-                'created' : invite.created,
-                'used' : invite.used,
-                'expired' : invite.expired,
-                'token' : invite.token_str
-            }
+            "id": invite.shop_id,
+            "location": invite.shop_location,
+            "invite": {
+                "for": invite.email,
+                "created": invite.created,
+                "used": invite.used,
+                "expired": invite.expired,
+                "token": invite.token_str,
+            },
         }
     return None
 
@@ -138,5 +177,5 @@ def audit_unit(business_id: uuid.UUID, audit_id):
     audit_db = db.Audit(session)
     audit = audit_db.get(audit_id, business_id)
     view = audit.model_dump()
-    view['payload'] = json.loads(view['payload'])
+    view["payload"] = json.loads(view["payload"])
     return view

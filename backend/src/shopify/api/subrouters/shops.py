@@ -34,7 +34,7 @@ async def shop_settings(shop_id: ShopIDDep):
 @router.post("/{shop_location}/settings")
 async def setup_shop(shop_id: ShopIDDep, settings: list[models.SettingIn]):
     for setting in settings:
-        cmd = commands.UpdateSetting(shop_id, name, value)
+        cmd = commands.UpdateSetting(entity_id=shop_id, name=name, value=value)
         bus.handle(cmd)
 
 
@@ -53,7 +53,7 @@ async def create_manager_invite_link(
     )
     bus.handle(cmd)
     return {
-        "message": "Invitation Sent To {email}",
+        "message": f"Invitation Sent To {token_params.email}",
         "token_url": request.url_for(
             "invite",
             shop_location=request.path_params['shop_location'],
@@ -66,11 +66,21 @@ async def create_manager_invite_link(
 def invite(shop_id: ShopIDDep):
     view = views.shop_invite(shop_id)
     if view is None:
-        return Response(status_code=204, content={"Shop Has No Valid Invite"})
+        return {}#Response(status_code=204, content= "Shop Has No Valid Invite")
     return models.ShopInvite(**view)
 
 
-@router.post("{shop_location}/dismiss-manager")
-async def dismiss_manager(shop_id: ShopIDDep):
-    cmd = commands.DismissManager(business_id, shop_id)
+@router.post("/{shop_location}/invite/delete")
+def delete_invite(shop_id: ShopIDDep):
+    pass
+
+
+@router.post("/{shop_location}/invite/update")
+def update_invite(shop_id: ShopIDDep):
+    pass
+
+
+@router.post("/{shop_location}/dismiss-manager")
+async def dismiss_manager(business_id: BusinessIDDep, shop_id: ShopIDDep):
+    cmd = commands.DismissManager(business_id=business_id, shop_id=shop_id)
     bus.handle(cmd)

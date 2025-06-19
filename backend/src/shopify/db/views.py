@@ -43,3 +43,19 @@ class View:
             owner_id=owner_id,
         )
         self.session.add(view)
+
+    def add_manager_to_shop(self, shop_id: uuid.UUID, manager: str, manager_email: str):
+        view = self.session.exec(
+            select(ShopView).where(ShopView.shop_id == shop_id)
+        ).first()
+        if view:
+            view.manager = manager
+            view.manager_email = manager_email
+
+    def remove_manager_from_shop(self, shop_id: uuid.UUID):
+        view = self.session.exec(
+            select(ShopView).where(ShopView.shop_id == shop_id)
+        ).first()
+        if view:
+            view.manager = None
+            view.manager_email = None

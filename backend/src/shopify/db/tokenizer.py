@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import hashlib
 import uuid
 
 from sqlmodel import Session, select
@@ -15,40 +16,39 @@ class Tokenizer:
         self.session = session
         self.events = events
 
+    def create_token(self, email: str, timestamp):
+        return hashlib.sha256(
+            f"{email}:{timestamp}:{config.SECRET_KEY}".encode()
+        ).hexdigest()[:24]
+
+    def validate_email(self, email: str, token: Token):
+        test_token = self.create_token(email, token.created)
+        return test_token == token.token_str
+
     def create(
         self,
         email: str,
         permissions: list[str],
         business_id: uuid,
         shop_id: uuid,
-        business_name: str,
         shop_location: str,
+        business_name: str,
     ):
         existing_token = self.session.exec(
             select(Token).where(Token.shop_id == shop_id, Token.email == email)
         ).first()
         if existing_token and existing_token.is_valid:
             return existing_token.token_str
-        current_time = datetime.now(config.TIMEZONE)
-        expiry_time = current_time + timedelta(
-            seconds=config.INVITE_TOKEN_EXPIRATION_SECONDS
-        )
-        payload = {
-            "permissions": permissions,
-            "location": str(shop_id),
-            "target": str(business_id),
-            "sub": email,
-            "iat": current_time.timestamp(),
-            "exp": expiry_time,
-            "type": "manager_invite",
-        }
-        token_str = jwt.encode(
-            payload,
-            key=config.SECRET_KEY,
-            algorithm=config.TOKEN_ALGORITHM,
-        )
+        current_time = datetime.now(config.TIMEZONE).timestamp()
+        token_str = self.create_token(email, current_time)
         token = Token(
-            email=email, token_str=token_str, business_id=business_id, shop_id=shop_id
+            email=email,
+            token_str=token_str,
+            business_id=business_id,
+            shop_id=shop_id,
+            shop_location=shop_location,
+            permissions=permissions,
+            created=current_time,
         )
         self.events.append(
             events.CreatedManagerInviteToken(
@@ -62,30 +62,15 @@ class Tokenizer:
         self.session.add(token)
         return token
 
-    def get(self, token_str: str):
+    def get(self, token_str: str, email: str):
         token = self.session.exec(
             select(Token).where(Token.token_str == token_str)
         ).first()
         if (token is None) or (not token.is_valid):
             return None
-        try:
-            decoded_token = jwt.decode(
-                token_str.strip(),
-                config.SECRET_KEY,
-                algorithms=config.TOKEN_ALGORITHM,
-            )
-        except jwt.ExpiredSignatureError:
-            token.expired = True
-            token.is_valid = False
-        except Exception as e:
-            token.is_valid = False
-            # add exception to log
-        finally:
-            if token.is_valid:
-                data = token.model_dump()
-                data.update({"decoded": decoded_token})
-                return Token(**data)
-            return token
+        if not self.validate_email(email, token):
+            return None
+        return token
 
     def fetch(self, business_id: uuid.UUID):
         invites = self.session.exec(

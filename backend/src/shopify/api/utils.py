@@ -87,7 +87,9 @@ def parse_records(records: dict[str, list]):
             {
                 shop["location"]: {
                     "id": shop["shop_id"],
-                    "permissions": shop["permissions"],
+                    "permissions": permissions.parse_permission_str(
+                        shop["permissions"]
+                    ),
                     "assigned": shop["assigned"],
                 }
             }

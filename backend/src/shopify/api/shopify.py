@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer
 
 from shopify.domain import commands
+from shopify import permissions
 from shopify import exceptions
 from shopify.api import bus
 from shopify import config
@@ -10,9 +11,9 @@ from shopify import db
 
 from shopify.api.subrouters import shops
 from shopify.api.subrouters import accounts
-from shopify.api.models import InviteAccept
 from shopify.api.subrouters import business
 from shopify.api.dependencies import ActiveUserDep
+from shopify.api.models import InviteAccept, PermissionModel
 
 # Use Router
 app = FastAPI(title="Inventra API")
@@ -47,6 +48,8 @@ async def create_business(business_name: str, active_user: ActiveUserDep):
         bus.handle(cmd)
     except exceptions.DuplicateBusinessRecord as e:
         return HTTPException(status_code=400, detail=f"{e}")
+    except exceptions.UnresolvedError:
+        return HTTPException(status_code=500, detail="Something Unexpected Occurred.")
     return {"message": f"Business : {cmd.name} Created Successfully."}
 
 
@@ -61,8 +64,20 @@ async def create_manager(invitee: InviteAccept):
         firstname=invitee.firstname,
         lastname=invitee.lastname,
         email=invitee.email,
-        token_str=invitee.token_str,
+        token_str=invitee.token_str.strip(),
         password=invitee.password,
     )
-    bus.handle(cmd)
+    try:
+        bus.handle(cmd)
+    except (exceptions.ShopAlreadyHasManager, exceptions.ShopNotFound):
+        return HTTPException(status_code=400, detail="Shop Invite Request Failed")
+    except exceptions.InvalidInvite as err:
+        return HTTPException(status_code=400, detail=str(err).title())
+    except exceptions.UnresolvedError:
+        return HTTPException(status_code=500, detail="Something Unexpected Occurred.")
     return {"message": "Invitation confirmed, Kindly check your email to proceed"}
+
+
+@app.get("/permissions/all", response_model=PermissionModel, tags=["Info"])
+async def get_all_permissions():
+    return permissions.ALL_PERMISSIONS

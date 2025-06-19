@@ -12,7 +12,7 @@ class ShopView(SQLModel, table=True):
     shop_id: uuid.UUID = Field(unique=True)
     location: str
     manager: str | None
-    manager_id: str | None
+    manager_email: str | None
 
     @model_serializer
     def serialize(self):
@@ -21,6 +21,7 @@ class ShopView(SQLModel, table=True):
             "business_id": self.business_id,
             "location": self.location,
             "manager": self.manager,
+            "manager_email": self.manager_email,
         }
 
 

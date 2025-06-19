@@ -13,7 +13,9 @@ class SettingDB:
         self.events = events or []
 
     def get_setting_id(self, name: str):
-        return self.session.exec(select(Setting.id).where(Setting.name == name)).one()
+        return self.session.exec(
+            select(Setting.id).where(Setting.name == name.upper())
+        ).first()
 
     def get_tag(self, name: str | None = None, id: int | None = None):
         if name:
@@ -25,6 +27,9 @@ class SettingDB:
 
     def set(self, name: str, value: str | int, entity_id: uuid.UUID, entity_type: str):
         setting_id = self.get_setting_id(name)
+        if setting_id is None:
+            # perform logic for unknown setting
+            raise ValueError(f"{name} Is Not A Valid Setting.")
         entity = self.session.exec(
             select(EntitySetting).where(
                 EntitySetting.entity_id == entity_id,

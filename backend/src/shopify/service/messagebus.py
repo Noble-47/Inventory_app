@@ -1,11 +1,22 @@
 from collections import deque
 from typing import Annotated
+import logging
 
-from shopify.service.uow import UnitOfWork
 from shopify.domain import commands
 from shopify.domain import events
+from shopify import exceptions
+
+from shopify.service.uow import UnitOfWork
 
 Message = Annotated[events.Event, commands.Command]
+
+logging.basicConfig(
+    filename="newfile.log", format="[%(asctime)s] %(message)s", filemode="a"
+)
+
+logger = logging.getLogger()
+
+logger.setLevel(logging.DEBUG)
 
 
 class MessageBus:
@@ -33,10 +44,32 @@ class MessageBus:
 
     def handle_event(self, event: events.Event):
         for handler in self.event_handlers.get(type(event), list()):
-            print(f"Handling event : {event} with handler : {handler}")
-            handler(event)
+            logger.info(
+                f"event : {event.__class__.__name__}, handler : {handler.func.__name__}, params : {event}"
+            )
+            try:
+                handler(event)
+            except Exception as e:
+                if isinstance(e, exceptions.OperationalError):
+                    logger.debug(f"Operational Error : {e}")
+                    raise e
+                logger.error(f"Unresolved Exception : {e}")
+                raise UnresolvedError(str(e))
+            else:
+                logger.info(f"handler : {handler.func.__name__} : completed")
 
     def handle_command(self, command: commands.Command):
         for handler in self.command_handlers[type(command)]:
-            print(f"Handling command : {command} with handler : {handler}")
-            handler(command)
+            logger.info(
+                f"command : {command.__class__.__name__}, handler : {handler.func.__name__}, params : {command}"
+            )
+            try:
+                handler(command)
+            except Exception as e:
+                if isinstance(e, exceptions.OperationalError):
+                    logger.debug(f"error : operational_error : {e}")
+                    raise e
+                logger.error(f"error : unresolved_exception : {e}")
+                raise exceptions.UnresolvedError(str(e))
+            else:
+                logger.info(f"handler : {handler.func.__name__} : completed")
