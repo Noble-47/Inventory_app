@@ -3,6 +3,7 @@ from fastapi import FastAPI
 
 from api import shopify
 from api import inventory
+from api import stock_port
 
 app = FastAPI(title="Inventra API")
 ALLOWED_ORIGINS = ["*"]
@@ -17,3 +18,4 @@ app.add_middleware(
 
 shopify.setup(app)
 inventory.setup(app)
+stock_port.setup(app)
