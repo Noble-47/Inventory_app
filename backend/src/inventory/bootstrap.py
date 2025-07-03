@@ -1,12 +1,33 @@
 from functools import partial
 
-from inventory.orm import start_mappers
 from inventory.service import handlers
 from inventory.domain import commands
 from inventory.domain import events
 
 from inventory.service.uow import UnitOfWork
-from inventory.service.messagebus import MessageBus
+from inventory.adapters.orm import start_mappers
+from inventory.service.message_bus import MessageBus
+
+
+def simple_bus(start_mapper=True):
+    if start_mapper:
+        start_mappers()
+
+    uow = UnitOfWork()
+    command_handlers = {
+        commands.CreateStock: [partial(handlers.create_stock, uow=uow)],
+        commands.DeleteStock: [partial(handlers.delete_stock, uow=uow)],
+    }
+    event_handlers = {
+        events.StockCreated: [
+            partial(handlers.add_stock_to_inventory_records, uow=uow)
+        ],
+        events.StockDeleted: [
+            partial(handlers.remove_stock_from_inventory_records, uow=uow)
+        ],
+    }
+    bus = MessageBus(command_handlers, event_handlers, uow)
+    return bus
 
 
 def bootstrap(start_mapper=True):

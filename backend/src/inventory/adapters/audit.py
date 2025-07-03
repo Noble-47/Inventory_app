@@ -6,25 +6,26 @@ from pydantic import BaseModel, Field
 
 from inventory.domain import events
 
+
 class StockLog(BaseModel):
-    id : int | None = Field(default=None)
+    id: int | None = Field(default=None, serialization_alias="audit_id")
     shop_id: uuid.UUID
     sku: str
-    time : datetime
-    description : str
-    event_hash : str
-    payload : str
+    time: datetime
+    description: str
+    event_hash: str
+    payload: str
 
 
 class BatchLog(BaseModel):
-    id : int | None = Field(default=None)
+    id: int | None = Field(default=None, serialization_alias="audit_id")
     sku: str
     shop_id: uuid.UUID
     batch_ref: str
-    time : datetime
-    description : str
-    event_hash : str
-    payload : str
+    time: datetime
+    description: str
+    event_hash: str
+    payload: str
 
 
 class Audit:
@@ -42,29 +43,25 @@ class Audit:
         self.session.add(audit)
 
     def get(self, audit_id: int):
-        audit = self.session.exec(
-            select(Model).where(
-                Model.id == audit_id
-            )
-        ).first()
+        audit = self.session.exec(select(Model).where(Model.id == audit_id)).first()
         return audit
 
 
-class ShopAudit:
-
-    def fetch(self, shop_id: uuid.UUID):
-        audits = self.session.exec(
-            select(StockLog)
-            .where(StockLog.shop_id == shop_id)
-            .order_by(StockLog.time)
-        ).all()
-        return audits
+# class ShopAudit:
+#
+#    def fetch(self, shop_id: uuid.UUID):
+#        audits = self.session.exec(
+#            select(StockLog)
+#            .where(StockLog.shop_id == shop_id)
+#            .order_by(StockLog.time)
+#        ).all()
+#        return audits
 
 
 class StockAudit(Audit):
     Model = StockLog
 
-    def fetch(self, shop_id: uuid.UUID, sku:str):
+    def fetch(self, shop_id: uuid.UUID, sku: str):
         audits = self.session.exec(
             select(StockLog)
             .where(StockLog.sku == sku)
@@ -77,16 +74,13 @@ class StockAudit(Audit):
 class BatchAudit(Audit):
     Model = BatchLog
 
-    def fetch_stock_log(self, sku:str):
+    def fetch_stock_log(self, sku: str):
         audits = self.session.exec(
-            select(BatchLog)
-            .where(BatchLog.sku == sku)
-            .order_by(BatchLog.time)
+            select(BatchLog).where(BatchLog.sku == sku).order_by(BatchLog.time)
         ).all()
         return audits
 
-
-    def fetch(self, batch_ref:str):
+    def fetch(self, batch_ref: str):
         audits = self.session.exec(
             select(BatchLog)
             .where(BatchLog.batch_ref == batch_ref)
@@ -95,5 +89,3 @@ class BatchAudit(Audit):
             .order_by(BatchLog.time)
         ).all()
         return audits
-
-

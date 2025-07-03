@@ -64,7 +64,7 @@ class StockAudit(BaseModel):
 
 
 class BatchAudit(BaseModel):
-    """View every action taken on all stocks in a shop."""
+    """View every action taken on all batches of a stock in a shop."""
 
     shop_id: uuid.UUID
     sku: str

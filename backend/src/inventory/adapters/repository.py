@@ -50,11 +50,15 @@ class SQLStockRepository(StockRepository):
         self.seen.add(stock)
         return stock
 
-    def create(self, global_sku:str, name:str, shop_id:uuid.UUID, quantity:int):
-        stock = Stock(global_sku=global_sku, name=name, shop_id=shop_id, quantity=quantity)
+    def create(self, global_sku: str, name: str, shop_id: uuid.UUID, quantity: int):
+        stock = Stock(
+            global_sku=global_sku, name=name, shop_id=shop_id, quantity=quantity
+        )
         self.session.add(stock)
         return stock
 
-    def check_exists(self, global_sku:str):
-        stock_id = self.session.execute(select(Stock.id).where(Stock.global_sku == global_sku)).first()
-        if stock_id return True else False
+    def check_exists(self, global_sku: str):
+        stock_id = self.session.execute(
+            select(Stock.id).where(Stock.global_sku == global_sku)
+        ).first()
+        return True if stock_id else False

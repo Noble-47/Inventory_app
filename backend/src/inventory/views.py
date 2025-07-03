@@ -19,22 +19,28 @@ def get_stock_view(shop_id, sku):
     return stock.model_dump()
 
 
-def get_inventory_history(shop_id):
-    session = get_session()
-    shop_audit = audit.ShopAudit(session)
-    shop_history = shop_audit.fetch(shop_id)
-    return [history.model_dump() for history in shop_history]
+# def get_inventory_history(shop_id):
+#    session = get_session()
+#    shop_audit = audit.ShopAudit(session)
+#    shop_history = shop_audit.fetch(shop_id)
+#    view = {'shop_id' : shop_id}
+#    view['stock_logs'] = [entry for entry in history]
+#    return view
 
 
 def get_stock_history(shop_id, sku):
     session = get_session()
     stock_audit = audit.StockAudit(session)
     stock_history = stock_audit.fetch(shop_id, sku)
-    return [history.model_dump() for history in stock_history]
+    view = {"shop_id": shop_id, "sku": sku}
+    view["logs"] = [history.model_dump() for history in stock_history]
+    return view
 
 
 def get_batch_history(shop_id, sku, batch_ref):
     session = get_session()
     batch_audit = audit.BatchAudit(session)
     batch_history = batch_audit.fetch(shop_id, sku, batch_ref)
-    return [history.model_dump() for history in batch_history]
+    view = {"shop_id": shop_id, "sku": sku, "batch_ref": batch_ref}
+    view["logs"] = [history.model_dump() for history in batch_history]
+    return view

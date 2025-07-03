@@ -3,7 +3,8 @@ import uuid
 
 from sqlalchemy import select
 
-from inventory.domain.read_models import BatchView, StockView
+from inventory.domain.read_models import InventoryView, StockView
+
 
 class View:
 

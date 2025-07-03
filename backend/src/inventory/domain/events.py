@@ -8,6 +8,7 @@ from inventory import config
 
 timezone = config.TIMEZONE
 
+
 class Event:
 
     def __post_init__(self):
@@ -16,7 +17,9 @@ class Event:
 
     @property
     def event_hash(self):
-        attrs = list(str(v) for k,v in asdict(self) if k not in ['time', 'description'])
+        attrs = list(
+            str(v) for k, v in asdict(self) if k not in ["time", "description"]
+        )
         raw = "|".join(attrs).encode()
         return hashlib.sha256(raw).hexdigest()
 
@@ -26,18 +29,27 @@ class Event:
 
     def serialize(self):
         return {
-            "name" : self.name,
+            "name": self.name,
             "sku": self.sku,
-            "description" : self.description,
-            "payload" : self.payload,
-            "event_hash" : self.event_hash,
-            "time" : self.time
+            "description": self.description,
+            "payload": self.payload,
+            "event_hash": self.event_hash,
+            "time": self.time,
         }
 
 
 @dataclass
+class StockCreated(Event):
+    pass
+
+
+class StockDeleted(Event):
+    pass
+
+
+@dataclass
 class BatchAddedToStock(Event):
-    shop_id:uuid.UUID
+    shop_id: uuid.UUID
     sku: str
     batch_ref: str
     quantity: float
@@ -51,7 +63,7 @@ class BatchAddedToStock(Event):
 
 @dataclass
 class DispatchedFromStock(Event):
-    shop_id:uuid.UUID
+    shop_id: uuid.UUID
     sku: str
     quantity: float
     dispatch_time: datetime
@@ -63,20 +75,21 @@ class DispatchedFromStock(Event):
 
 @dataclass
 class DispatchedFromBatch(Event):
-    sku:str
-    batch_ref:str
-    quantity:int
+    sku: str
+    batch_ref: str
+    quantity: int
 
 
 @dataclass
 class StockSoldOut(Event):
-    shop_id:uuid.UUID
+    shop_id: uuid.UUID
     sku: str
     when: datetime
 
     @property
     def description(self):
         return f"Sold out {self.sku}"
+
 
 @dataclass
 class BatchSoldOut(Event):
@@ -102,11 +115,11 @@ class UpdatedBatchPrice(Event):
 
 @dataclass
 class AdjustedStockLevel(Event):
-    shop_id:uuid.UUID
+    shop_id: uuid.UUID
     sku: str
-    on: str # actual batch updated
+    on: str  # actual batch updated
     by: int
-    batch_adjustment_record:list[dict[str, int]]
+    batch_adjustment_record: list[dict[str, int]]
 
     @property
     def description(self):

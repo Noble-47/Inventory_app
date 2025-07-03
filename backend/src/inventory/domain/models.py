@@ -15,7 +15,7 @@ from inventory.config import TIMEZONE as timezone
 Dispatch = namedtuple("Dispatch", "quantity from_")
 
 
-def sku_generator(shop_id:str, name: str):
+def sku_generator(shop_id: str, name: str):
     identifier = f"{shop_id[:5]}-{name.strip().upper()[:3]}"
     return f"{identifier}"
 
@@ -57,7 +57,7 @@ class Batch:
 
 @dataclass
 class Stock:
-    shop_id:str
+    shop_id: str
     sku: str
     name: str
     batches: list[Batch] = field(default_factory=list)
@@ -96,7 +96,9 @@ class Stock:
         new_batch = Batch(self.sku, ref, quantity, price, time)
         self.batches.append(new_batch)
         self.events.append(
-            events.BatchAddedToStock(self.shop_id, self.sku, new_batch.ref, quantity, price, time)
+            events.BatchAddedToStock(
+                self.shop_id, self.sku, new_batch.ref, quantity, price, time
+            )
         )
 
     def dispatch(self, quantity: int, timestamp: float):
@@ -119,12 +121,24 @@ class Stock:
                 continue
             dispatch = batch.dispatch(quantity)
             quantity -= dispatch.quantity
-            self.events.append(events.DispatchedFromBatch(sku=self.sku, batch_ref=batch.ref, quantity=dispatch.quantity))
+            self.events.append(
+                events.DispatchedFromBatch(
+                    sku=self.sku, batch_ref=batch.ref, quantity=dispatch.quantity
+                )
+            )
             if batch.quantity == 0:
-                self.events.append(events.BatchSoldOut(sku=self.sku, batch_ref=batch.ref, when=dispatch_time))
+                self.events.append(
+                    events.BatchSoldOut(
+                        sku=self.sku, batch_ref=batch.ref, when=dispatch_time
+                    )
+                )
             dispatch_list.append(dispatch)
         if self.level == 0:
-            self.events.append(events.StockSoldOut(sku=self.sku, shop_id=self.shop_id, when=dispatch_time))
+            self.events.append(
+                events.StockSoldOut(
+                    sku=self.sku, shop_id=self.shop_id, when=dispatch_time
+                )
+            )
         return dispatch_list
 
     def get_batch(self, batch_ref):
@@ -133,8 +147,11 @@ class Stock:
         except StopIteration:
             raise exceptions.BatchNotFound(f"Batch with ref {batch_ref} was not found")
 
-
-    def update_batch_price(self, batch_ref, price: float,):
+    def update_batch_price(
+        self,
+        batch_ref,
+        price: float,
+    ):
         # raises StopIteration if batch not found
         batch = self.get_batch(batch_ref)
         batch.price = price
@@ -151,13 +168,22 @@ class Stock:
             if batch.quantity > 0:
                 # No need for adjustments
                 batch.quantity = quantity - sold
-                record.append({batch.ref : batch.quantity})
+                record.append({batch.ref: batch.quantity})
             else:
                 self.controller.adjust_stock_level(
-                    starting_batch=batch, offset=offset, adjustment="raise", record=record
+                    starting_batch=batch,
+                    offset=offset,
+                    adjustment="raise",
+                    record=record,
                 )
             self.events.append(
-                events.IncreasedStockLevel(self.shop_id, self.sku, on=batch.ref, by=quantity, adjustment_record=record)
+                events.IncreasedStockLevel(
+                    self.shop_id,
+                    self.sku,
+                    on=batch.ref,
+                    by=quantity,
+                    adjustment_record=record,
+                )
             )
         else:
             offset = (batch.stock_in_units - quantity) - batch.quantity
@@ -166,12 +192,21 @@ class Stock:
             if sold < quantity:
                 # no need for adjustments
                 batch.quantity = quantity - sold
-                record.append({batch.ref : batch.quantity})
+                record.append({batch.ref: batch.quantity})
             else:
                 batch.quantity = 0
                 self.controller.adjust_stock_level(
-                    starting_batch=batch, offset=offset, adjustment="lower", record=record
+                    starting_batch=batch,
+                    offset=offset,
+                    adjustment="lower",
+                    record=record,
                 )
             self.events.append(
-                events.DecreasedStockLevel(self.shop_id, self.sku, on=batch.ref, by=quantity, adjustment_record=record)
+                events.DecreasedStockLevel(
+                    self.shop_id,
+                    self.sku,
+                    on=batch.ref,
+                    by=quantity,
+                    adjustment_record=record,
+                )
             )

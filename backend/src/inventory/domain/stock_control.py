@@ -2,11 +2,8 @@ from datetime import datetime
 
 from inventory.domain.strategies import Strategy, FIFO, LIFO, WeightedAverage
 
-strategies = {
-    "fifo" : FIFO,
-    "lifo" : LIFO,
-    "weighted_average" : WeightedAverage
-}
+strategies = {"fifo": FIFO, "lifo": LIFO, "weighted_average": WeightedAverage}
+
 
 def get_controller(stock, strategy: str):
     strategy_class = strategies.get(strategy)
@@ -23,7 +20,9 @@ class Controller:
         self.stock = stock
         self.strategy = strategy()
 
-    def adjust_stock_level(self, starting_batch, offset: int, adjustment: str, record:list):
+    def adjust_stock_level(
+        self, starting_batch, offset: int, adjustment: str, record: list
+    ):
         stock = [
             batch
             for batch in self.dispatch_generator()

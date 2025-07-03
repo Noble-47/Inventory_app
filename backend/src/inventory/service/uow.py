@@ -13,7 +13,7 @@ DEFAULT_SESSION_FACTORY = sessionmaker(
 
 class UnitOfWork:
 
-    def __init__(self, message_queue: Deque, session_factory=DEFAULT_SESSION_FACTORY):
+    def __init__(self, session_factory=DEFAULT_SESSION_FACTORY):
         self.session_factory = session_factory
 
     def __enter__(self):

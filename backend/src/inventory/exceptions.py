@@ -6,5 +6,9 @@ class BatchNotFound(Exception):
     pass
 
 
+class StockNotFound(Exception):
+    pass
+
+
 class DuplicateStockRecord(Exception):
     pass
