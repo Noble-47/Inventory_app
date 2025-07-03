@@ -23,7 +23,7 @@ class Controller:
         self.stock = stock
         self.strategy = strategy()
 
-    def adjust_stock_level(self, starting_batch, offset: int, adjustment: str = "lower"):
+    def adjust_stock_level(self, starting_batch, offset: int, adjustment: str, record:list):
         stock = [
             batch
             for batch in self.dispatch_generator()
@@ -32,11 +32,11 @@ class Controller:
         # reverse list so that it begins from the batch after starting batch to "next-to-be-sold" batch
         if adjustment.lower() == "lower":
             starting_batch.quantity = 0
-            self.strategy.lower_stock_level(offset, stock)
+            self.strategy.lower_stock_level(offset, stock, record)
         elif adjustment.lower() == "raise":
             stock = stock[::-1]
             stock.append(starting_batch)
-            self.strategy.raise_stock_level(offset, stock)
+            self.strategy.raise_stock_level(offset, stock, record)
         else:
             raise ValueError(
                 "Adjustment must either be 'raise' or 'lower'. Got {adjustment}"

@@ -3,12 +3,12 @@ import uuid
 from fastapi import APIRouter, Depends, Request, Response
 
 from shopify.domain import commands
-from shopify.api import models
-from shopify.api import bus
 from shopify import views
 
-from shopify.api.dependencies import SessionDep, ShopIDDep, BusinessIDDep
-from shopify.api.dependencies import verify_shop_belongs_to_current_user_business
+from api.shopify import models
+from api.shopify import bus
+from api.shopify.dependencies import SessionDep, ShopIDDep, BusinessIDDep
+from api.shopify.dependencies import verify_shop_belongs_to_current_user_business
 
 router = APIRouter(
     prefix="/{business_name}",
@@ -19,10 +19,10 @@ router = APIRouter(
 # Unused business_id param is used to declare the type for the business_id in global prefix
 
 
-@router.get("/{shop_location}/profile", response_model=models.Shop)
-async def shop_profile(shop_id: ShopIDDep):
-    view = views.shop_view(shop_id)
-    return view
+#@router.get("/{shop_location}/profile", response_model=models.Shop)
+#async def shop_profile(shop_id: ShopIDDep):
+#    view = views.shop_view(shop_id)
+#    return view
 
 
 @router.get("/{shop_location}/settings", response_model=models.ShopSetting)
@@ -56,7 +56,7 @@ async def create_manager_invite_link(
         "message": f"Invitation Sent To {token_params.email}",
         "token_url": request.url_for(
             "invite",
-            shop_location=request.path_params['shop_location'],
+            shop_location=request.path_params["shop_location"],
             business_name=request.path_params["business_name"],
         )._url,
     }
@@ -66,7 +66,7 @@ async def create_manager_invite_link(
 def invite(shop_id: ShopIDDep):
     view = views.shop_invite(shop_id)
     if view is None:
-        return {}#Response(status_code=204, content= "Shop Has No Valid Invite")
+        return {}  # Response(status_code=204, content= "Shop Has No Valid Invite")
     return models.ShopInvite(**view)
 
 

@@ -6,12 +6,13 @@ from pydantic import EmailStr
 
 from shopify.domain import commands
 from shopify import exceptions
-from shopify.api import models
-from shopify.api import utils
-from shopify.api import bus
 
-from shopify.api.dependencies import SessionDep
-from shopify.api.dependencies import ActiveUserDep
+from api.shopify import models
+from api.shopify import utils
+from api.shopify import bus
+
+from api.shopify.dependencies import SessionDep
+from api.shopify.dependencies import ActiveUserDep
 
 router = APIRouter(prefix="/accounts", tags=["Accounts"])
 
@@ -74,21 +75,38 @@ async def login_for_token(session: SessionDep, login: models.Login) -> models.To
     return token
 
 
-@router.get("/profile", response_model_exclude_none=True, response_model=models.Profile)
+@router.get("/profile", response_model=models.Profile)
 async def user_profile(active_user: ActiveUserDep):
     profile = {
-        'firstname' : active_user['firstname'],
-        'lastname' : active_user['lastname'],
-        'email' : active_user['email'],
-        'account_type' : active_user['account_type'],
-        'is_active' : active_user['is_active'],
-        'is_verified' : active_user['is_verified']
+        "firstname": active_user["firstname"],
+        "lastname": active_user["lastname"],
+        "email": active_user["email"],
+        "account_type": active_user["account_type"],
+        "is_active": active_user["is_active"],
+        "is_verified": active_user["is_verified"],
     }
 
-    if active_user['account_type'] == 'business_owner':
-        profile['business'] = [{'name' : k, 'id' : v['id'], 'shops' : v['shops'], 'created' : v['created']} for k,v in active_user['business'].items()]
-    if active_user['account_type'] == 'shop_manager':
-        profile['managed_shops'] = [{'location' : k, 'id' : v['id'], 'permissions' : v['permissions'], 'assigned' : v['assigned']} for k,v in active_user['managed_shops'].items()]
+    if active_user["account_type"] == "business_owner":
+        profile["business"] = [
+            {
+                "name": k,
+                "id": v["id"],
+                "shops": v["shops"],
+                "created": v["created"],
+            }
+            for k, v in active_user["business"].items()
+        ]
+    if active_user["account_type"] == "shop_manager":
+        profile["managed_shops"] = [
+            {
+                "location": v["location"],
+                "id": v["id"],
+                "permissions": v["permissions"],
+                "assigned": v["assigned"],
+                "business": k,
+            }
+            for k, v in active_user["manager_record"].items()
+        ]
     return models.Profile(**profile)
 
 

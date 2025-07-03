@@ -1,0 +1,18 @@
+## DONE
+1. Complete dispatch and offset control strategies
+2. Implement mechanism for loading control strategy from user setting or stock setting
+3. Implement lower_adjustment
+4. Implement raise_adjustment
+
+## TODO
+Implement orm.py
+Implement repository class
+
+## FUTURE
+3. Implement user activity tracker
+4. Implement user roles and permission
+5. Implement inventory api
+6. Implement event queue producer and consumption mechanism
+
+
+Don't forget to add tests

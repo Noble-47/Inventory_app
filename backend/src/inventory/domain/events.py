@@ -1,6 +1,7 @@
 from dataclasses import dataclass, asdict
 from datetime import datetime
 import hashlib
+import uuid
 import pytz
 
 from inventory import config
@@ -15,7 +16,7 @@ class Event:
 
     @property
     def event_hash(self):
-        attrs = list(str(v) for k,v in asdict(self) if k != 'time')
+        attrs = list(str(v) for k,v in asdict(self) if k not in ['time', 'description'])
         raw = "|".join(attrs).encode()
         return hashlib.sha256(raw).hexdigest()
 
@@ -27,7 +28,7 @@ class Event:
         return {
             "name" : self.name,
             "sku": self.sku,
-            "version_number" : self.version_number,
+            "description" : self.description,
             "payload" : self.payload,
             "event_hash" : self.event_hash,
             "time" : self.time
@@ -36,44 +37,80 @@ class Event:
 
 @dataclass
 class BatchAddedToStock(Event):
+    shop_id:uuid.UUID
     sku: str
-    version_number:int
     batch_ref: str
     quantity: float
     price: float
     stock_time: datetime
 
+    @property
+    def description(self):
+        return f"Added {self.quantity} units to {self.sku}"
+
 
 @dataclass
 class DispatchedFromStock(Event):
+    shop_id:uuid.UUID
     sku: str
-    version_number:int
     quantity: float
     dispatch_time: datetime
+
+    @property
+    def description(self):
+        return f"Dispatched {self.quantity} units from {self.sku}"
+
+
+@dataclass
+class DispatchedFromBatch(Event):
+    sku:str
+    batch_ref:str
+    quantity:int
 
 
 @dataclass
 class StockSoldOut(Event):
+    shop_id:uuid.UUID
+    sku: str
+    when: datetime
+
+    @property
+    def description(self):
+        return f"Sold out {self.sku}"
+
+@dataclass
+class BatchSoldOut(Event):
     sku: str
     batch_ref: str
-    version_number:int
     when: datetime
+
+    @property
+    def description(self):
+        return f"Sold out {self.sku}"
 
 
 @dataclass
 class UpdatedBatchPrice(Event):
     sku: str
     batch_ref: str
-    version_number:int
     price: str
+
+    @property
+    def description(self):
+        return f"Updated {self.sku} price to {self.price}"
 
 
 @dataclass
 class AdjustedStockLevel(Event):
+    shop_id:uuid.UUID
     sku: str
-    version_number:int
     on: str # actual batch updated
     by: int
+    batch_adjustment_record:list[dict[str, int]]
+
+    @property
+    def description(self):
+        return f"Updated batch-{self.on} by {self.by}"
 
 
 @dataclass

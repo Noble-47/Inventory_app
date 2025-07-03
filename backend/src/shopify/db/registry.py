@@ -31,7 +31,7 @@ class Registry(db.BaseRepo):
             )
         ).all()
         records = {"business": [record.model_dump() for record in business_record]}
-        records["managed_shops"] = []
+        records["manager_record"] = []
         for business in records["business"]:
             business_id = business["business_id"]
             shops = self.session.exec(
@@ -43,6 +43,7 @@ class Registry(db.BaseRepo):
 
         managerial_records = self.session.exec(
             select(
+                models.ShopRegistry.business_id,
                 models.ShopRegistry.shop_id,
                 models.ShopRegistry.location,
                 models.ManagerRegistry,
@@ -57,10 +58,10 @@ class Registry(db.BaseRepo):
         ).all()
 
         for record in managerial_records:
-            shop_id, location, manager_record = record
+            business_id, shop_id, location, manager_record = record
             manager_record = manager_record.model_dump()
-            manager_record.update({"location": location, "id": shop_id})
-            records["managed_shops"].append(manager_record)
+            manager_record.update({"location": location, "id": shop_id, "business_id" : business_id})
+            records["manager_record"].append(manager_record)
 
         return records
 
@@ -71,3 +72,11 @@ class Registry(db.BaseRepo):
             )
         ).first()
         return business_id
+
+    def get_shop_manager(self, shop_id:uuid.UUID):
+        shop_registry = self.session.exec(
+            select(models.ShopRegistry).where(models.ShopRegistry.shop_id == shop_id)
+        ).first()
+        if shop_registry and shop_registry.manager is not None:
+            return shop_registry.manager.fullname
+        return None

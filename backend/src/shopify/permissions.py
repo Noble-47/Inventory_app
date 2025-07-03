@@ -1,6 +1,13 @@
 import json
 
-ALL_PERMISSIONS = {"sales": [], "inventory": [], "stock_port": [], "debt_tracker": []}
+ALL_PERMISSIONS = {
+    "sales": [],
+    "inventory": [
+        "view_inventory_analytics"  # view COGS, inventory_value, profits, loss
+    ],
+    "stock_port": [],
+    "debt_tracker": [],
+}
 
 # permissions_str = "sale:view_audit sale:view_history inventory:update_quantity"
 

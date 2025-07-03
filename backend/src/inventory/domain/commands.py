@@ -1,33 +1,43 @@
 from dataclasses import dataclass
+from datetime import datetime
+import uuid
 
 class Command:
     pass
 
-
-@dataclass
-class DispatchGoodsFromStock:
-    sku:str
+class CreateStock(Command):
+    """Allow user to add stock directly during app setup period."""
+    shop_id:uuid.UUID
+    name:str
+    time:datetime
+    price:float
     quantity:int
-    sale_time:float
-
 
 @dataclass
-class AddBatchToStock:
+class AddBatchToStock(Command):
     sku:str
     batch_ref:str
     quantity:int
     price:float
+    timestamp:float
 
 
 @dataclass
-class UpdateBatchPrice:
+class DispatchGoodsFromStock(Command):
+    sku:str
+    quantity:int
+    timestamp:float
+
+
+@dataclass
+class UpdateBatchPrice(Command):
     sku:str
     batch_ref:str
     price:float
 
 
 @dataclass
-class UpdateBatchQuantity:
+class UpdateBatchQuantity(Command):
     sku:str
     batch_ref:str
     quantity:int

@@ -41,3 +41,13 @@ class Business(db.BaseRepo):
             ).first()
             is not None
         )
+
+    def get_business_name(self, business_id:uuid.UUID):
+        return self.session.exec(
+            select(models.Business.name).where(models.Business.id == business_id)
+        ).first()
+
+    def get_business_id(self, business_name:str):
+        return self.session.exec(
+            select(models.Business.id).where(models.Business.name == name)
+        ).first()

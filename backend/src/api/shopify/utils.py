@@ -6,7 +6,7 @@ from jwt.exceptions import InvalidTokenError
 from sqlmodel import Session
 import jwt
 
-from shopify.api import models as api_models
+from api.shopify import models as api_models
 from shopify.utils import verify_password
 from shopify.domain import models
 from shopify import permissions
@@ -34,26 +34,6 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
     return encoded_jwt
 
 
-profile = {
-    "firstname": "somename",
-    "lastname": "somename",
-    "email": "somename",
-    "business": {
-        "abc-sfs-345": {
-            "name": "business_name",
-            "shops": ["shop_1.id", "shop_2.id", "shop_3.id"],
-            "created": "datetime",
-        }
-    },
-    "managed_shops": {
-        "bsf-asd-3242-dsdf": {
-            "loc": "some location",
-            "permissions": {"sale": [], "inventory": []},
-        }
-    },
-}
-
-
 def get_account_record(email: str, session: Session):
     accounts_db = db.Account(session)
     user = accounts_db.get(email)
@@ -61,31 +41,36 @@ def get_account_record(email: str, session: Session):
         return None
     registry_db = db.Registry(session)
     records = registry_db.fetch(user.id)
-    records = parse_records(records)
+    records = parse_records(records, session)
     account_record = user.model_dump()
     account_record.update(records)
+    print(account_record)
     return account_record
 
 
-def parse_records(records: dict[str, list]):
+def parse_records(records: dict[str, list], session):
     parsed = {}
     parsed["business"] = {}
-    parsed["managed_shops"] = {}
+    parsed["manager_record"] = {}
     for business in records["business"]:
         parsed["business"].update(
             {
                 business["business_name"]: {
                     "id": business["business_id"],
-                    "shops": business["shops"],
+                    "shops": [
+                        {"location": location, "id": id, "manager": get_shop_manager(id, session)}
+                        for location, id in business["shops"].items()
+                    ],
                     "created": business["created"],
                 }
             }
         )
 
-    for shop in records["managed_shops"]:
-        parsed["managed_shops"].update(
+    for shop in records["manager_record"]:
+        parsed["manager_record"].update(
             {
-                shop["location"]: {
+                get_business_name(shop["business_id"], session): {
+                    "location": shop["location"],
                     "id": shop["shop_id"],
                     "permissions": permissions.parse_permission_str(
                         shop["permissions"]
@@ -101,3 +86,19 @@ def parse_records(records: dict[str, list]):
 def check_shop_belong_to_business(shop_id, business_id, session):
     shop_db = db.Shop(session)
     return shop_db.business_id == business_id
+
+
+def get_business_id(business_name: str, session):
+    return db.Business(session).get_business_id(business_name)
+
+
+def get_business_name(business_id, session):
+    return db.Business(session).get_business_name(business_id)
+
+
+def get_shop_id(shop_location: str, business_id, session):
+    return db.Shop(session).get_shop_id(shop_location, business_id)
+
+
+def get_shop_manager(shop_id: str, session):
+    return db.Registry(session).get_shop_manager(shop_id)

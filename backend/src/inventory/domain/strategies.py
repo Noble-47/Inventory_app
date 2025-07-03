@@ -28,7 +28,7 @@ class Strategy:
                 stock_level = 0
         return inventory_value
 
-    def lower_stock_level(self, offset: int, stock: list[Batch]):
+    def lower_stock_level(self, offset: int, stock: list[Batch], record:list):
         for batch in stock:
             if batch.quantity == 0:
                 continue
@@ -37,9 +37,10 @@ class Strategy:
             batch.quantity -= correction_value
             if offset == 0:
                 break
+            record.append({batch.ref : quantity})
         return offset
 
-    def raise_stock_level(self, offset: int, stock: list[Batch]):
+    def raise_stock_level(self, offset: int, stock: list[Batch], record:list):
         # batch list is from "batch to be sold from next" backwards
         for batch in stock:
             if batch.quantity == batch.stock_in_units:

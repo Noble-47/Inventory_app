@@ -22,17 +22,23 @@ class Account(BaseModel):
 class AccountCreate(Account):
     password: str
 
+class ShopDetail(BaseModel):
+    id: uuid.UUID
+    location: str
+    manager:str | None = Field(default=None)
 
-class AccountBusinessProfile(BaseModel):
+
+class BusinessDetail(BaseModel):
     name: str
     id: uuid.UUID
-    shops: dict[str, uuid.UUID]
+    shops: list[ShopDetail]
     created: datetime
 
 
-class AccountShopProfile(BaseModel):
-    location: str
+class ManagedShopDetail(BaseModel):
     id: uuid.UUID
+    location: str
+    business:str
     permissions: dict[str, list]
     assigned: datetime
 
@@ -40,8 +46,8 @@ class AccountShopProfile(BaseModel):
 class Profile(Account):
     is_active: bool
     is_verified: bool
-    business: None | list[AccountBusinessProfile] = Field(default=None)
-    managed_shops: None | list[AccountShopProfile] = Field(default=None)
+    business: None | list[BusinessDetail] = Field(default=None)
+    managed_shops: None | list[ManagedShopDetail] = Field(default=None)
 
 
 class Token(BaseModel):

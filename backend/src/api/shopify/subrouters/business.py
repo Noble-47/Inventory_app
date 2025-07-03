@@ -3,13 +3,13 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException
 
 from shopify.domain import commands
-from shopify.api import models
 from shopify import exceptions
-from shopify.api import bus
 from shopify import views
 
-from shopify.api.dependencies import SessionDep, ActiveUserDep, BusinessIDDep
-from shopify.api.dependencies import verify_current_user_is_business_owner
+from api.shopify import bus
+from api.shopify import models
+from api.shopify.dependencies import verify_current_user_is_business_owner
+from api.shopify.dependencies import SessionDep, ActiveUserDep, BusinessIDDep
 
 router = APIRouter(
     tags=["Business"],
@@ -17,12 +17,12 @@ router = APIRouter(
 )
 
 
-@router.get("/{business_name}/profile", response_model=models.BusinessProfile)
-async def business_profile(business_name: str, business_id: BusinessIDDep):
-    business_view = views.business_view(business_id)
-    if business_view is None:
-        raise HTTPException(status_code=404, detail="Not Found")
-    return business_view
+#@router.get("/{business_name}/profile", response_model=models.BusinessProfile)
+#async def business_profile(business_name: str, business_id: BusinessIDDep):
+#    business_view = views.business_view(business_id)
+#    if business_view is None:
+#        raise HTTPException(status_code=404, detail="Not Found")
+#    return business_view
 
 
 @router.get("/{business_name}/settings", response_model=models.BusinessSetting)
@@ -59,7 +59,7 @@ async def setup_business(business_id: BusinessIDDep, settings: list[models.Setti
         try:
             bus.handle(cmd)
         except exceptions.InvalidSettingKey as err:
-            errors.append({'name' : setting.name, 'error' : "Not supported"})
+            errors.append({"name": setting.name, "error": "Not supported"})
     if errors:
         return errors
     return {"message": "Settings Updated"}
@@ -78,5 +78,8 @@ async def add_shop(shop: models.ShopAdd, business_id: BusinessIDDep):
 @router.post("/{business_name}/delete-shop", status_code=204)
 async def remove_shop(shop: models.ShopRemove, business_id: BusinessIDDep):
     cmd = commands.RemoveShop(business_id=business_id, shop_id=shop.shop_id)
-    bus.handle(cmd)
+    try:
+        bus.handle(cmd)
+    except Exception as err:
+        return HTTPException(status_code=400, detail=str(err))
     return {"message": f"Delete Shop : {cmd.shop_id}"}

@@ -19,3 +19,14 @@ class Shop(BaseRepo):
             ).first()
             is None
         )
+
+    def get_shop_id(self, location:str, business_id: uuid.UUID):
+        return (
+            self.session.exec(
+                select(ShopRegistry.shop_id)
+                .where(
+                    ShopRegistry.business_id == business_id,
+                    ShopRegistry.location == location
+                )
+            ).first()
+        )

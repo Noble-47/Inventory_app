@@ -36,7 +36,7 @@ class Account(db.BaseRepo):
     def _get(self, email: str):
         account = self.session.exec(
             select(models.Account).where(models.Account.email == email)
-        ).one()
+        ).first()
         return account
 
     def check_email_exists(self, email: str):
