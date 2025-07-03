@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from inventory.adapters import orm
 
 
-def setup(app:FastAPI):
+def setup(app: FastAPI):
 
     from api.inventory.router import router
 
@@ -13,4 +13,3 @@ def setup(app:FastAPI):
     def on_startup():
         orm.create_tables
         orm.start_mappers()
-
