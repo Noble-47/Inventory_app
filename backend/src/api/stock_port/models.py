@@ -29,7 +29,6 @@ class OrderSlim(BaseModel):
     supplies_phone: str
     status: str
     expected_delivery_date: datetime
-    delivered: bool
 
 
 class ShopOrders(BaseModel):
