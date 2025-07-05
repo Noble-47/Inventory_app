@@ -34,14 +34,46 @@ class Event(BaseModel):
             "time": self.time,
         }
 
+class OrderLine(BaseModel):
+    sku:str
+    ref:str
+    cost:float
+
+class NewOrderLine(OrderLine):
+    expected_quantity:int
 
 class OrderCreated(Event):
-    pass
-
+    shop_id:UUID
+    order_id:UUID
+    status:str
+    supplier:str
+    supplier_phone:str
+    order_line:list[NewOrderLine]
+    expected_delivery_date:datetime
+    description:str = Field(default="New Order created")
 
 class OrderCancelled(Event):
-    pass
+    order_id:UUID
+    shop_id:UUID
+    reason:str = Field(default="None given")
+    description:str = Field(default="Order cancelled")
 
+class CompletedOrderLine(OrderLine):
+    sku:str
+    ref:str
+    delivered_quantity:int
+    cost:float
 
-class OrderDelivered(Event):
-    pass
+class OrderCompleted(Event):
+    order_id:UUID
+    shop_id:UUID
+    order_line:list[CompletedOrderLine]
+    delivery_date:datetime
+    description:str = Field(default="Order marked as completed.")
+
+class OrderUpdated(Event):
+    order_id:UUID
+    shop_id:UUID
+    reason:str = Field(default="None given.")
+    update:str
+    description:str = Field(default="Order was updated.")

@@ -5,13 +5,6 @@ import uuid
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
 
 
-class PermissionModel(BaseModel):
-    sales: list[str]
-    inventory: list[str]
-    stock_port: list[str]
-    debt_tracker: list[str]
-
-
 class Account(BaseModel):
     firstname: str
     lastname: str
@@ -22,10 +15,11 @@ class Account(BaseModel):
 class AccountCreate(Account):
     password: str
 
+
 class ShopDetail(BaseModel):
     id: uuid.UUID
     location: str
-    manager:str | None = Field(default=None)
+    manager: str | None = Field(default=None)
 
 
 class BusinessDetail(BaseModel):
@@ -38,7 +32,7 @@ class BusinessDetail(BaseModel):
 class ManagedShopDetail(BaseModel):
     id: uuid.UUID
     location: str
-    business:str
+    business: str
     permissions: dict[str, list]
     assigned: datetime
 

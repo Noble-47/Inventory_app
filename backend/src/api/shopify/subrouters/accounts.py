@@ -110,10 +110,6 @@ async def user_profile(active_user: ActiveUserDep):
     return models.Profile(**profile)
 
 
-async def logout():
-    pass
-
-
 async def update():
     pass
 

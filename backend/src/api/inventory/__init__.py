@@ -5,6 +5,7 @@ from inventory.bootstrap import simple_bus
 
 bus = simple_bus()
 
+
 def setup(app: FastAPI):
 
     from api.inventory.router import router
@@ -14,3 +15,7 @@ def setup(app: FastAPI):
     @app.on_event("startup")
     def on_startup():
         orm.create_tables
+
+    @app.get("services/inventory", tags=["Services"])
+    def root():
+        return {"message": "Inventory service is running."}

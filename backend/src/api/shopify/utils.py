@@ -44,7 +44,6 @@ def get_account_record(email: str, session: Session):
     records = parse_records(records, session)
     account_record = user.model_dump()
     account_record.update(records)
-    print(account_record)
     return account_record
 
 
@@ -58,7 +57,11 @@ def parse_records(records: dict[str, list], session):
                 business["business_name"]: {
                     "id": business["business_id"],
                     "shops": [
-                        {"location": location, "id": id, "manager": get_shop_manager(id, session)}
+                        {
+                            "location": location,
+                            "id": id,
+                            "manager": get_shop_manager(id, session),
+                        }
                         for location, id in business["shops"].items()
                     ],
                     "created": business["created"],

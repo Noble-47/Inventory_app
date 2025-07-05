@@ -3,8 +3,13 @@ from pydantic import BaseModel
 
 
 class Supplier(BaseModel):
+    title: str | None = Field(default=None)
     name: str
     phone_number: str
+
+    def __repr__(self):
+        title = f"{self.title} " if self.title else ""
+        return f"Supplier:{title}name.title()"
 
 
 class OrderStatus(Enum, str):
@@ -18,8 +23,8 @@ class BatchLine(BaseModel):
     sku: str
     batch_ref: str
     expected_quantity: int
-    delivered_quantity: int
-    delivery_date: datetime
+    delivered_quantity: int | None = Field(default=None)
+    delivery_date: datetime | None = field(default=None)
     cost: float
 
 
@@ -40,7 +45,7 @@ class Order(BaseModel):
 
 
 # Read Models
-class SupplyView(BaseModel):
+class OrderView(BaseModel):
     ref: str
     shop_id: UUID
     order_id: UUID

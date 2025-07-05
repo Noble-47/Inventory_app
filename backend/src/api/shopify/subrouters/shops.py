@@ -19,8 +19,8 @@ router = APIRouter(
 # Unused business_id param is used to declare the type for the business_id in global prefix
 
 
-#@router.get("/{shop_location}/profile", response_model=models.Shop)
-#async def shop_profile(shop_id: ShopIDDep):
+# @router.get("/{shop_location}/profile", response_model=models.Shop)
+# async def shop_profile(shop_id: ShopIDDep):
 #    view = views.shop_view(shop_id)
 #    return view
 

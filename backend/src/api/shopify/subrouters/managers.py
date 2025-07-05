@@ -1,0 +1,58 @@
+from datetime import datetime
+from uuid import UUID
+
+from fastapi import APIRouter, Depends
+from pydantic import BaseModel
+
+from api.shopify.dependencies import verify_current_user_is_business_owner
+from api.shopify.dependencies import BusinessIDDep
+
+
+router = APIRouter(
+    prefix="/{business_name}/managers",
+    tags=["Manage Managers"],
+    dependencies=[Depends(verify_current_user_is_business_owner)],
+)
+
+
+class ManagerPermissions(BaseModel):
+    sales: list[str]
+    inventory: list[str]
+    orders: list[str]
+    tracker: list[str]
+    analysis: list[str]
+
+
+class Manager(BaseModel):
+    shop_id: UUID
+    shop_location: str
+    manager_id: int
+    firstname: str
+    lastname: str
+    permissions: ManagerPermissions
+    assigned: datetime
+
+
+@router.get("/", response_model=list[Manager])
+def get_managers_list(business_name: str):
+    pass
+
+
+@router.get("/{manager_id}", response_model=Manager)
+def get_manager_details(business_name: str, manager_id: int):
+    pass
+
+
+@router.post("{manager_id}/permissions/update")
+def update_manager_permission(business_name: str, manager_id: int):
+    pass
+
+
+@router.delete("{manager_id}/remove")
+def dismiss_shop_manager(business_name: str, manager_id: int):
+    pass
+
+
+@router.get("/permissions/all", response_model=ManagerPermissions)
+async def get_all_permissions():
+    return permissions.ALL_PERMISSIONS

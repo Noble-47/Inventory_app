@@ -54,6 +54,7 @@ async def get_current_active_user(
 
 ## Business Related Dependencies
 
+
 ## Business Owners Dependencies
 def get_business_id_from_user_record(
     business_name: str,
@@ -86,6 +87,7 @@ async def verify_shop_belongs_to_current_user_business(
         return active_user
     raise HTTPException(status_code=404, detail="Shop Not Found")
 
+
 def get_shop_id_from_business_record(
     business_name: str,
     shop_location: str,
@@ -100,73 +102,78 @@ def get_shop_id_from_business_record(
 
 
 ## Shop Managers Dependencies
-def get_user_business_association(business_name:str, user:Annotated[dict[str, Any], Depends(get_current_active_user)], session: Annotated[Session, Depends(db.db_session)]):
+def get_user_business_association(
+    business_name: str,
+    user: Annotated[dict[str, Any], Depends(get_current_active_user)],
+    session: Annotated[Session, Depends(db.db_session)],
+):
     record = {
-        'business_name' : business_name,
-        'association_type' : '',
-        'user_id' : user['id'],
-        'user_email' : user['email'],
-        'user_fullname' : f"{user['firstname']} {user['lastname']}",
-        'shops' : []
+        "business_name": business_name,
+        "association_type": "",
+        "user_id": user["id"],
+        "user_email": user["email"],
+        "user_fullname": f"{user['firstname']} {user['lastname']}",
+        "shops": [],
     }
 
     business_id = utils.get_business_id(business_name, session)
     if business_id is None:
         raise HTTPException(status_code=404, detail="Business Not Found.")
-    if business_name in user['business']:
-        record['association_type'] = 'business_owner'
-        record['shops'] = user['business'][business_name]['shops']
+    if business_name in user["business"]:
+        record["association_type"] = "business_owner"
+        record["shops"] = user["business"][business_name]["shops"]
 
-    elif business_name in user['manager_record']:
-        record['association_type'] = 'shop_manager'
-        reocrd['shops'] = user['manager_record'][business_name].keys()
+    elif business_name in user["manager_record"]:
+        record["association_type"] = "shop_manager"
+        reocrd["shops"] = user["manager_record"][business_name].keys()
 
     else:
         raise HTTPException(status_code=404, detail="Business Not Found.")
 
-    record['business_id'] = business_id
+    record["business_id"] = business_id
     return record
 
+
 def get_user_shop_association(
-    business_name:str,
-    shop_location:str,
-    user:Annotated[dict[str, Any], Depends(get_current_active_user)],
-    session: Annotated[Session, Depends(db.db_session)]
+    business_name: str,
+    shop_location: str,
+    user: Annotated[dict[str, Any], Depends(get_current_active_user)],
+    session: Annotated[Session, Depends(db.db_session)],
 ):
     record = {
-        'business_name' : business_name,
-        'shop_location' : shop_location,
-        'shop_id' : '',
-        'association_type' : '',
-        'permissions' : '',
-        'user_id' : user['id'],
-        'user_email' : user['email'],
-        'user_fullname' : f"{user['firstname']} {user['lastname']}"
+        "business_name": business_name,
+        "shop_location": shop_location,
+        "shop_id": "",
+        "association_type": "",
+        "permissions": "",
+        "user_id": user["id"],
+        "user_email": user["email"],
+        "user_fullname": f"{user['firstname']} {user['lastname']}",
     }
 
     business_id = utils.get_business_id(business_name, session)
-    shop_id = utils.get_shop_id(record['business_id'], shop_location, session)
+    shop_id = utils.get_shop_id(record["business_id"], shop_location, session)
     if shop_id is None:
         raise HTTPException(detail="Shop Not Found.", status_code=404)
     if business_id is None:
         raise HTTPException(status_code=404, detail="Business Not Found.")
-    record['shop_id'] = shop_id
-    record['business_id'] = business_id
+    record["shop_id"] = shop_id
+    record["business_id"] = business_id
 
-    if shop_location in user['business'].get(business_name, dict()):
-        record['association_type'] = 'business_owner'
-        record['permissions'] = permissions.parse_permissions('*')
+    if shop_location in user["business"].get(business_name, dict()):
+        record["association_type"] = "business_owner"
+        record["permissions"] = permissions.parse_permissions("*")
         return record
 
-    if business_name not in user['manager_record']:
+    if business_name not in user["manager_record"]:
         raise HTTPException(status_code=404, detail="Shop Not Found")
 
-    if shop_location not in user['manager_record'][business_name]:
+    if shop_location not in user["manager_record"][business_name]:
         raise HTTPException(status_code=404, detail="Shop Not Found")
 
-    record['association_type'] = 'shop_manager'
-    permissions = user['manager_record'][business_id][shop_location]['permissions']
-    record['permissions'] = permissions
+    record["association_type"] = "shop_manager"
+    permissions = user["manager_record"][business_id][shop_location]["permissions"]
+    record["permissions"] = permissions
     return record
 
 

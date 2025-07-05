@@ -8,6 +8,8 @@ from shopify import views
 
 from api.shopify import bus
 from api.shopify import models
+
+from api.shopify.exceptions import UnsupportedSettingException
 from api.shopify.dependencies import verify_current_user_is_business_owner
 from api.shopify.dependencies import SessionDep, ActiveUserDep, BusinessIDDep
 
@@ -17,8 +19,8 @@ router = APIRouter(
 )
 
 
-#@router.get("/{business_name}/profile", response_model=models.BusinessProfile)
-#async def business_profile(business_name: str, business_id: BusinessIDDep):
+# @router.get("/{business_name}/profile", response_model=models.BusinessProfile)
+# async def business_profile(business_name: str, business_id: BusinessIDDep):
 #    business_view = views.business_view(business_id)
 #    if business_view is None:
 #        raise HTTPException(status_code=404, detail="Not Found")
@@ -59,9 +61,9 @@ async def setup_business(business_id: BusinessIDDep, settings: list[models.Setti
         try:
             bus.handle(cmd)
         except exceptions.InvalidSettingKey as err:
-            errors.append({"name": setting.name, "error": "Not supported"})
+            errors.append(setting.name)
     if errors:
-        return errors
+        raise UnsupportedSettingException(values=errors)
     return {"message": "Settings Updated"}
 
 
