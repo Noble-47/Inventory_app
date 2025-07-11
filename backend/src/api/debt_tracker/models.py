@@ -32,11 +32,11 @@ class DebtorList(BaseModel):
 
 # Query Models
 class DebtQueryParams(BaseModel):
-    purchase_ref: str | None = Field(default=None)
-    customer_name: str | None = Field(defualt=None)
-    customer_phone: str | None = Field(defualt=None)
-    product: str | None = Field(defualt=None)
-    min_amount_owed: float | None = Field(defualt=None)
-    max_amount_owed: float | None = Field(defualt=None)
-    start_date: datetime | None = Field(defualt=None)
-    end_date: datetime | None = Field(defualt=None)
+    purchase_ref: str | None = ""
+    customer_name: str | None = ""
+    customer_phone: str | None = ""
+    product: str | None = ""
+    min_amount_owed: float | None = Field(default=None)
+    max_amount_owed: float | None = Field(default=None)
+    start_date: datetime | None = Field(default=None)
+    end_date: datetime | None = Field(default=None)

@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, Query
 
 from api.debt_tracker import models
 from api.shared_dependencies import get_user_shop_association, ShopIDDep
@@ -16,7 +18,7 @@ def get_debt_details(shop_id: ShopIDDep, ref: str):
 
 
 @router.get("/debt_tracker/list", response_model=models.DebtorList)
-def view_debtors_list(shop_id: ShopIDDep, query: models.DebtQueryParams):
+def view_debtors_list(shop_id: ShopIDDep, query: Annotated[models.DebtQueryParams, Query(), None]=None):
     return views.fetch_debtors(shop_id, query)
 
 

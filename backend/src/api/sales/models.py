@@ -32,10 +32,9 @@ class SaleList(BaseModel):
 
 # Query Models
 class SaleQueryParams(BaseModel):
-    ref: str | None = Field(default=None)
-    customer_name: str | None = Field(defualt=None)
-    customer_phone: str | None = Field(defualt=None)
-    product: str | None = Field(defualt=None)
-
-    start_date: datetime | None = Field(defualt=None)
-    end_date: datetime | None = Field(defualt=None)
+    ref: str | None = ""
+    customer_name: str | None = ""
+    customer_phone: str | None = ""
+    product: str | None = ""
+    start_date: datetime | None = Field(default=None)
+    end_date: datetime | None = Field(default=None)

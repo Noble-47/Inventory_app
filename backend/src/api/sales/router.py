@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, Query
 
 from api.sales import models
 from api.shared_dependencies import get_user_shop_association, ShopIDDep
@@ -11,7 +13,7 @@ router = APIRouter(
 
 
 @router.get("/list", response_model=models.SaleList)
-def view_shop_sales(shop_id: ShopIDDep, query: models.SaleQueryParams = None):
+def view_shop_sales(shop_id: ShopIDDep, query: Annotated[models.SaleQueryParams, Query(), None] = None):
     return views.fetch_sales(shop_id, query)
 
 
