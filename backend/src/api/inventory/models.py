@@ -8,10 +8,9 @@ from pydantic import BaseModel, Field
 class CreateStock(BaseModel):
     """Add a new stock to shop."""
 
-    shop_id: uuid.UUID
+    name: str
     quantity: int = Field(default=0)
     price: float
-    time: datetime
 
 
 # Response Models

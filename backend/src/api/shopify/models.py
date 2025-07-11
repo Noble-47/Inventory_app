@@ -92,17 +92,26 @@ class BusinessSetting(EntitySetting):
     pass
 
 
+class ManagerPermissions(BaseModel):
+    sales: list[str]
+    inventory: list[str]
+    orders: list[str]
+    tracker: list[str]
+    analytics: list[str]
+
+
 class CreateInviteToken(BaseModel):
     email: str
-    permissions: Union[str, dict[str, list[str]]]
+    permissions: Union[str, ManagerPermissions]
 
 
 class Invite(BaseModel):
     for_: str = Field(alias="for")
     created: datetime
-    used: bool
+    used: bool = Field(serialization_alias="acknowledge")
     expired: bool
     token: str
+    sent: bool
 
 
 class ShopInvite(BaseModel):

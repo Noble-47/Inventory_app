@@ -7,9 +7,10 @@ from api.inventory import bus
 from api.inventory import models
 from api.shared_dependencies import ShopIDDep
 from api.shared_dependencies import get_user_shop_association
+from api.shared_dependencies import permission_checker_factory
 
 router = APIRouter(
-    prefix="/{business_name}/{shop_name}/inventory",
+    prefix="/{business_name}/{shop_location}/inventory",
     tags=["Inventory"],
     dependencies=[
         Depends(
@@ -17,6 +18,8 @@ router = APIRouter(
         )  # throws a not found if user has no association with shop
     ],
 )
+
+requires_permission = permission_checker_factory("inventory")
 
 
 @router.get("/", response_model=models.ShopView)
@@ -39,10 +42,16 @@ def view_batch(shop_id: ShopIDDep, sku: str, batch_ref: str):
     return veiws.get_batch_history(shop_id, sku, batch_ref)
 
 
+# requires can_add_new_product permissions
 @router.post("/add")
+@requires_permission("can_add_new_product")
 def add_stock(shop_id: ShopIDDep, stock: models.CreateStock):
+    """
+    Creates a new product in inventory.
+    Requires `can_add_new_product` permission
+    """
     command = commands.CreateStock(
-        shop_id=shop_id, name=stock.name, quantity=stock.quantity
+        shop_id=shop_id, name=stock.name, quantity=stock.quantity, price=stock.price
     )
     try:
         bus.handle(command)
@@ -53,8 +62,14 @@ def add_stock(shop_id: ShopIDDep, stock: models.CreateStock):
     return {"message": "Stock added."}
 
 
+# requires can_delete_product
 @router.delete("/{sku}")
+@requires_permission("can_delete_product")
 def delete_stock(shop_id: ShopIDDep, sku: str):
+    """
+    Delete a product record from inventory.
+    Requires permission `can_delete_product`
+    """
     commands = commands.DeleteStock(shop_id=shop_id, sku=stock.sku)
     try:
         bus.handle(command)

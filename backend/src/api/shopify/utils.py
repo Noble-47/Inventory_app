@@ -56,14 +56,10 @@ def parse_records(records: dict[str, list], session):
             {
                 business["business_name"]: {
                     "id": business["business_id"],
-                    "shops": [
-                        {
-                            "location": location,
-                            "id": id,
-                            "manager": get_shop_manager(id, session),
-                        }
+                    "shops": {
+                        location: {"id": id, "manager": get_shop_manager(id, session)}
                         for location, id in business["shops"].items()
-                    ],
+                    },
                     "created": business["created"],
                 }
             }
@@ -99,7 +95,7 @@ def get_business_name(business_id, session):
     return db.Business(session).get_business_name(business_id)
 
 
-def get_shop_id(shop_location: str, business_id, session):
+def get_shop_id(business_id, shop_location: str, session):
     return db.Shop(session).get_shop_id(shop_location, business_id)
 
 

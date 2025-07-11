@@ -4,6 +4,8 @@ from uuid import UUID
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
+from shopify import permissions
+
 from api.shopify.dependencies import verify_current_user_is_business_owner
 from api.shopify.dependencies import BusinessIDDep
 
@@ -20,7 +22,7 @@ class ManagerPermissions(BaseModel):
     inventory: list[str]
     orders: list[str]
     tracker: list[str]
-    analysis: list[str]
+    analytics: list[str]
 
 
 class Manager(BaseModel):

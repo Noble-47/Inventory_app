@@ -96,9 +96,9 @@ def get_shop_id_from_business_record(
     ],
 ):
     business = business_owner["business"][business_name]
-    if shop_location not in business["shops"]:
-        raise HTTPException(status_code=404, detail="Shop Not Found")
-    return business["shops"][shop_location]
+    if shop_location in business["shops"]:
+        return business["shops"][shop_location]["id"]
+    raise HTTPException(status_code=404, detail="Shop Not Found")
 
 
 ## Shop Managers Dependencies
@@ -146,13 +146,15 @@ def get_user_shop_association(
         "shop_id": "",
         "association_type": "",
         "permissions": "",
-        "user_id": user["id"],
+        # "user_id": user["id"],
         "user_email": user["email"],
         "user_fullname": f"{user['firstname']} {user['lastname']}",
     }
 
     business_id = utils.get_business_id(business_name, session)
-    shop_id = utils.get_shop_id(record["business_id"], shop_location, session)
+    shop_id = utils.get_shop_id(
+        business_id=business_id, shop_location=shop_location, session=session
+    )
     if shop_id is None:
         raise HTTPException(detail="Shop Not Found.", status_code=404)
     if business_id is None:
