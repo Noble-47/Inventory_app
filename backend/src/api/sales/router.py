@@ -10,12 +10,12 @@ router = APIRouter(
 )
 
 
-@router.get("/list")
+@router.get("/list", response_model=models.SaleList)
 def view_shop_sales(shop_id: ShopIDDep, query: models.SaleQueryParams = None):
     return views.fetch_sales(shop_id, query)
 
 
-@router.get("/{ref}")
+@router.get("/{ref}", response_model=models.SaleModel)
 def view_sale_detail(shop_id: ShopIDDep, ref: str):
     return views.get_sale_detail(shop_id, ref)
 

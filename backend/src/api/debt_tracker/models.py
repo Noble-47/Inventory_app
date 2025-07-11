@@ -32,7 +32,7 @@ class DebtorList(BaseModel):
 
 # Query Models
 class DebtQueryParams(BaseModel):
-    ref: str | None = Field(default=None)
+    purchase_ref: str | None = Field(default=None)
     customer_name: str | None = Field(defualt=None)
     customer_phone: str | None = Field(defualt=None)
     product: str | None = Field(defualt=None)
