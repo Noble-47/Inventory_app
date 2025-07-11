@@ -11,3 +11,7 @@ def setup(app: FastAPI):
     def on_startup():
         # create db tables
         pass
+
+    @app.get("/services/orders", tags=["Services"])
+    def root():
+        return {"message": "Orders service is running"}

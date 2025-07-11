@@ -9,7 +9,7 @@ from shopify import exceptions
 from shopify import config
 from shopify import db
 
-from api.shopify.models import InviteAccept
+from api.shopify.models import InviteAccept, ManagerPermissions
 from api.shopify.dependencies import ActiveUserDep
 from api.shopify.exceptions import UnsupportedSettingException
 
@@ -42,7 +42,7 @@ def setup(app: FastAPI):
             content={"detail": "Unsupported setting value(s)", "values": exc.values},
         )
 
-    @app.get("services/shopify", tags=["Services"])
+    @app.get("/services/shopify", tags=["Services"])
     def root():
         return "Shopify service is running"
 
@@ -89,3 +89,11 @@ def setup(app: FastAPI):
                 status_code=500, detail="Something Unexpected Occurred."
             )
         return {"message": "Invitation confirmed, Kindly check your email to proceed"}
+
+    @app.get(
+        "/managers/permissions/all",
+        response_model=ManagerPermissions,
+        tags=["Manage Managers"],
+    )
+    async def get_all_permissions():
+        return permissions.ALL_PERMISSIONS

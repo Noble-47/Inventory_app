@@ -16,6 +16,6 @@ def setup(app: FastAPI):
     def on_startup():
         orm.create_tables
 
-    @app.get("services/inventory", tags=["Services"])
+    @app.get("/services/inventory", tags=["Services"])
     def root():
         return {"message": "Inventory service is running."}

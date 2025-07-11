@@ -11,6 +11,6 @@ def setup(app: FastAPI):
     def on_startup():
         pass
 
-    @app.get("services/sales", tags=["Services"])
+    @app.get("/services/sales", tags=["Services"])
     def root():
         return {"message": "Sales service is running"}

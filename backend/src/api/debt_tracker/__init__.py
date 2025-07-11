@@ -11,6 +11,6 @@ def setup(app: FastAPI):
     def on_startup():
         pass
 
-    @app.get("services/tracker", tags=["Services"])
+    @app.get("/services/tracker", tags=["Services"])
     def root():
         return {"message": "Debt Tracker service is running"}

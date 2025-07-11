@@ -92,7 +92,11 @@ async def user_profile(active_user: ActiveUserDep):
                 "name": k,
                 "id": v["id"],
                 "shops": [
-                    dict(location=location, manager=shop_details['manager'], id=shop_details['id'])
+                    dict(
+                        location=location,
+                        manager=shop_details["manager"],
+                        id=shop_details["id"],
+                    )
                     for location, shop_details in v["shops"].items()
                 ],
                 "created": v["created"],

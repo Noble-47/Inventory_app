@@ -53,8 +53,3 @@ def update_manager_permission(business_name: str, manager_id: int):
 @router.delete("{manager_id}/remove")
 def dismiss_shop_manager(business_name: str, manager_id: int):
     pass
-
-
-@router.get("/permissions/all", response_model=ManagerPermissions)
-async def get_all_permissions():
-    return permissions.ALL_PERMISSIONS
