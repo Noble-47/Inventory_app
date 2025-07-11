@@ -8,6 +8,7 @@ import jwt
 
 from shopify.db.models import Token
 from shopify.domain import events
+from shopify import triggers
 from shopify import config
 
 
@@ -19,7 +20,7 @@ class Tokenizer:
     def create_token(self, email: str, timestamp):
         return hashlib.sha256(
             f"{email}:{timestamp}:{config.SECRET_KEY}".encode()
-        ).hexdigest()[:24]
+        ).hexdigest()[:10]
 
     def validate_email(self, email: str, token: Token):
         test_token = self.create_token(email, token.created)
@@ -38,7 +39,11 @@ class Tokenizer:
             select(Token).where(Token.shop_id == shop_id, Token.email == email)
         ).first()
         if existing_token and existing_token.is_valid:
-            return existing_token.token_str
+            if not existing_token.sent:
+                try:
+                    triggers.send_invite_email(self.session, token=existing_token)
+                finally:
+                    return existing_token.token_str
         current_time = datetime.now(config.TIMEZONE).timestamp()
         token_str = self.create_token(email, current_time)
         token = Token(
@@ -83,3 +88,9 @@ class Tokenizer:
             select(Token).where(Token.shop_id == shop_id, Token.is_valid == True)
         ).first()
         return invite
+
+    def mark_as_sent(self, token_str: str):
+        token = self.session.exec(
+            select(Token).where(Token.token_str == token_str)
+        ).first()
+        token.sent = True

@@ -128,6 +128,7 @@ def business_invites(business_id: uuid.UUID):
                 "used": invite.used,
                 "expired": invite.expired,
                 "token": invite.token_str,
+                "sent": invite.sent,
             },
         }
         for invite in invites
@@ -149,6 +150,7 @@ def shop_invite(shop_id: uuid.UUID):
                 "used": invite.used,
                 "expired": invite.expired,
                 "token": invite.token_str,
+                "sent": invite.sent,
             },
         }
     return None

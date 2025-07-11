@@ -42,12 +42,12 @@ class Business(db.BaseRepo):
             is not None
         )
 
-    def get_business_name(self, business_id:uuid.UUID):
+    def get_business_name(self, business_id: uuid.UUID):
         return self.session.exec(
             select(models.Business.name).where(models.Business.id == business_id)
         ).first()
 
-    def get_business_id(self, business_name:str):
+    def get_business_id(self, business_name: str):
         return self.session.exec(
-            select(models.Business.id).where(models.Business.name == name)
+            select(models.Business.id).where(models.Business.name == business_name)
         ).first()

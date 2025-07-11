@@ -25,6 +25,7 @@ class Token(SQLModel, table=True):
     expired: bool = False
     TTL: float = Field(default=INVITE_TOKEN_EXPIRATION_SECONDS)
     created: float = Field(default_factory=datetime_now_utc.timestamp)
+    sent: bool = Field(default=False)
 
     def check_validity(self):
         if isinstance(self.created, float):

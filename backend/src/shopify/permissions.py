@@ -3,10 +3,19 @@ import json
 ALL_PERMISSIONS = {
     "sales": [],
     "inventory": [
-        "view_inventory_analytics"  # view COGS, inventory_value, profits, loss
+        # Write permissions
+        "can_add_new_product",
+        "can_delete_product",
+        # Read permissions
+        "can_view_inventory_value",
+        "can_view_cogs",
     ],
-    "stock_port": [],
-    "debt_tracker": [],
+    "orders": [],
+    "tracker": [],
+    "analytics": [
+        "can_view_profits",
+        "can_view_loss",
+    ],
 }
 
 # permissions_str = "sale:view_audit sale:view_history inventory:update_quantity"

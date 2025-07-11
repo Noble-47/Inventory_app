@@ -1,4 +1,7 @@
 from pprint import pprint
+import mailtrap as mt
+
+from shopify import config
 
 
 class EmailNotifier:
@@ -17,17 +20,15 @@ class EmailNotifier:
             Inventra Team
         """
 
-    def parse_invitation_message(
-        self, invitation_token, firstname, lastname, business_name
-    ):
+    def parse_invitation_message(self, invitation_token, business_name):
         return f"""
-            Hi { firstname } { lastname or ""}
+            Hi from Inventra,
 
             The manager at { business_name }, has invited you to help manage their business.
 
             To accept the invitation and get started, please click the link below:
 
-            👉 { invitation_token }
+            👉 {config.MANAGER_INVITE_FORM_URL}/{invitation_token}
 
             If you weren’t expecting this invitation or don’t recognize the business, you can safely ignore this email.
 
@@ -37,30 +38,43 @@ class EmailNotifier:
             The Inventra Team
         """
 
-    def send_verification_token(
+    def send_verification_email(
         self, token: str, firstname: str, lastname: str, email: str
     ):
         message = self.parse_verification_message(token, firstname, lastname)
-        self.send(message, email)
+        self.send(message, email, subject="Verify Your Email.")
 
-    def send_invitation_token(
-        self, token: str, firstname: str, lastname: str, email: str, business_name: str
-    ):
-        message = self.parse_invitation_message(message)
-        self.send(message, email)
+    def send_invite_email(self, token: str, email: str, business_name: str):
+        message = self.parse_invitation_message(
+            invitation_token=token, business_name=business_name
+        )
+        self.send(message, email, subject="Manager Invite From {business_name}")
 
 
-class ConsoleEmailNotifier(EmailNotifier):
-    def send(self, message: str, email: str):
+class ConsoleLog(EmailNotifier):
+    def send(self, message: str, email: str, subject):
         print()
         print(f"Intercepting Message For: {email}")
         pprint(message)
         print()
 
 
-class SMTPEmailNotifier(EmailNotifier):
-    pass
+class MailTrap(EmailNotifier):
+
+    def send(self, message: str, email: str, subject: str):
+        mail = mt.Mail(
+            sender=mt.Address(email=config.ADMIN_EMAIL, name=config.ADMIN_NAME),
+            to=[mt.Address("dummyclown44@gmail.com")],
+            subject=subject,
+            text=message,
+        )
+
+        client = mt.MailtrapClient(token=config.EMAIL_PROVIDER_KEY)
+        print()
+        print(config.EMAIL_PROVIDER_KEY)
+        print()
+        client.send(mail)
 
 
-class MailGunEmailNotifier(EmailNotifier):
+class MailGun(EmailNotifier):
     pass

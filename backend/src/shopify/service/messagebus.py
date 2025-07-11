@@ -16,7 +16,7 @@ logging.basicConfig(
 
 logger = logging.getLogger()
 
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 
 class MessageBus:
@@ -54,7 +54,7 @@ class MessageBus:
                     logger.debug(f"Operational Error : {e}")
                     raise e
                 logger.error(f"Unresolved Exception : {e}")
-                raise UnresolvedError(str(e))
+                raise exceptions.UnresolvedError(str(e))
             else:
                 logger.info(f"handler : {handler.func.__name__} : completed")
 

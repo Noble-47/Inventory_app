@@ -218,9 +218,22 @@ def create_and_send_verification_token(
     """Create and send verification token after user registration."""
     with uow:
         verification = uow.verification.create(event.email)
-        notifier.send_verification_token(
+        notifier.send_verification_email(
             verification.verification_str, event.firstname, event.lastname, event.email
         )
+        uow.commit()
+
+
+def send_invitation_link(
+    event: events.CreatedManagerInviteToken, notifier: EmailNotifier, uow: UnitOfWork
+):
+    """Send manager invite to manager email."""
+    with uow:
+        business_name = uow.business.get_business_name(event.business_id)
+        notifier.send_invite_email(
+            email=event.email, business_name=business_name, token=event.token_str
+        )
+        uow.tokenizer.mark_as_sent(event.token_str)
         uow.commit()
 
 

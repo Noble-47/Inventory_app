@@ -4,6 +4,8 @@ import os
 from dotenv import load_dotenv
 import pytz
 
+from shopify.notification.email import MailTrap
+
 load_dotenv()
 
 SERVICE_DIR = Path(__file__).parent
@@ -36,3 +38,12 @@ DEFAULT_SETTINGS = [
         "default": 10,
     },
 ]
+
+MANAGER_INVITE_FORM_URL = "https://frontend_invite_form.com"
+EMAIL_PROVIDER_KEY = os.environ.get("EMAIL_PROVIDER_KEY")
+ADMIN_EMAIL = "inventra@email.com"
+ADMIN_NAME = "Inventra"
+
+
+def get_default_notifier():
+    return MailTrap()

@@ -8,10 +8,11 @@ from shopify import db
 
 from shopify.service.uow import UnitOfWork
 from shopify.service.messagebus import MessageBus
-from shopify.notification.email import ConsoleEmailNotifier
+
+default_email_notifier = config.get_default_notifier()
 
 
-def bootstrap(email_notifier=ConsoleEmailNotifier()):
+def bootstrap(email_notifier=default_email_notifier):
     uow = UnitOfWork()
     command_handlers = inject_command_handlers(uow)
     event_handlers = inject_event_handlers(uow, email_notifier)
@@ -49,7 +50,10 @@ def inject_event_handlers(uow, notifier):
             partial(handlers.log_audit, uow=uow),
             partial(handlers.remove_manager_from_shop_view, uow=uow),
         ],
-        events.CreatedManagerInviteToken: [partial(handlers.log_audit, uow=uow)],
+        events.CreatedManagerInviteToken: [
+            partial(handlers.log_audit, uow=uow),
+            partial(handlers.send_invitation_link, uow=uow, notifier=notifier),
+        ],
         db_events.NewAccountCreated: [
             partial(
                 handlers.create_and_send_verification_token, notifier=notifier, uow=uow
