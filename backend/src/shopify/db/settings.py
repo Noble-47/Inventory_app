@@ -74,5 +74,4 @@ class SettingDB:
             .join(Setting, Setting.id == EntitySetting.setting_id)
             .where(EntitySetting.entity_id == entity_id)
         ).all()
-        print([setting for setting in settings])
         return settings

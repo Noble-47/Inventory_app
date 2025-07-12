@@ -14,6 +14,7 @@ def get_shop_id_from_association_record(
 ):
     if record["shop_location"] == shop_location:
         return record["shop_id"]
+    print("HERE : SHOP NOT FOUND IN SHARED DEPENDENCIES")
     raise HTTPException(status=404, detail="Shop Not Found")
 
 

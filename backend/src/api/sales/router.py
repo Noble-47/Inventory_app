@@ -13,7 +13,9 @@ router = APIRouter(
 
 
 @router.get("/list", response_model=models.SaleList)
-def view_shop_sales(shop_id: ShopIDDep, query: Annotated[models.SaleQueryParams, Query(), None] = None):
+def view_shop_sales(
+    shop_id: ShopIDDep, query: Annotated[models.SaleQueryParams, Query(), None] = None
+):
     return views.fetch_sales(shop_id, query)
 
 

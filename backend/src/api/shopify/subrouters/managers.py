@@ -1,10 +1,12 @@
 from datetime import datetime
+from typing import Literal
 from uuid import UUID
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
-from shopify import permissions
+from api.shopify.models import ManagerPermissions, Manager
+
 
 from api.shopify.dependencies import verify_current_user_is_business_owner
 from api.shopify.dependencies import BusinessIDDep
@@ -15,24 +17,6 @@ router = APIRouter(
     tags=["Manage Managers"],
     dependencies=[Depends(verify_current_user_is_business_owner)],
 )
-
-
-class ManagerPermissions(BaseModel):
-    sales: list[str]
-    inventory: list[str]
-    orders: list[str]
-    tracker: list[str]
-    analytics: list[str]
-
-
-class Manager(BaseModel):
-    shop_id: UUID
-    shop_location: str
-    manager_id: int
-    firstname: str
-    lastname: str
-    permissions: ManagerPermissions
-    assigned: datetime
 
 
 @router.get("/", response_model=list[Manager])

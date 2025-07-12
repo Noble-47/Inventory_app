@@ -28,10 +28,6 @@ def parse_permission_str(permission_str: str):
     permissions = permission_str.split(" ")
     headers = set((permission.split(":")[0].strip() for permission in permissions))
     for header in headers:
-        # permission_group = {
-        #   'sale' : ['view_audit', 'view_history'],
-        #   'inventory' : ['update_quantity']
-        # }
         permission_group[header] = [
             permission.split(":")[1].strip()
             for permission in permissions

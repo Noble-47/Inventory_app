@@ -1,9 +1,9 @@
 from datetime import datetime, timedelta
 from typing import Annotated
 
-from fastapi import Depends, HTTPException
 from jwt.exceptions import InvalidTokenError
 from sqlmodel import Session
+from fastapi import Depends
 import jwt
 
 from api.shopify import models as api_models

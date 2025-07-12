@@ -51,7 +51,7 @@ class MessageBus:
                 handler(event)
             except Exception as e:
                 if isinstance(e, exceptions.OperationalError):
-                    logger.debug(f"Operational Error : {e}")
+                    logger.error(f"Operational Error : {e}")
                     raise e
                 logger.error(f"Unresolved Exception : {e}")
                 raise exceptions.UnresolvedError(str(e))

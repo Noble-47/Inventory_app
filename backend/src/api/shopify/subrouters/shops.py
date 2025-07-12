@@ -3,10 +3,12 @@ import uuid
 from fastapi import APIRouter, Depends, Request, Response
 
 from shopify.domain import commands
+from shopify import exceptions
 from shopify import views
 
 from api.shopify import models
 from api.shopify import bus
+from api.shopify.exceptions import UnsupportedSettingException
 from api.shopify.dependencies import SessionDep, ShopIDDep, BusinessIDDep
 from api.shopify.dependencies import verify_shop_belongs_to_current_user_business
 
@@ -19,12 +21,6 @@ router = APIRouter(
 # Unused business_id param is used to declare the type for the business_id in global prefix
 
 
-# @router.get("/{shop_location}/profile", response_model=models.Shop)
-# async def shop_profile(shop_id: ShopIDDep):
-#    view = views.shop_view(shop_id)
-#    return view
-
-
 @router.get("/{shop_location}/settings", response_model=models.ShopSetting)
 async def shop_settings(shop_id: ShopIDDep):
     view = views.shop_settings(shop_id)
@@ -33,9 +29,18 @@ async def shop_settings(shop_id: ShopIDDep):
 
 @router.post("/{shop_location}/settings")
 async def setup_shop(shop_id: ShopIDDep, settings: list[models.SettingIn]):
+    errors = []
     for setting in settings:
-        cmd = commands.UpdateSetting(entity_id=shop_id, name=name, value=value)
-        bus.handle(cmd)
+        cmd = commands.UpdateSetting(
+            entity_id=shop_id, name=setting.name, value=setting.value
+        )
+        try:
+            bus.handle(cmd)
+        except exceptions.InvalidSettingKey as err:
+            errors.append(setting.name)
+    if errors:
+        raise UnsupportedSettingException(values=errors)
+    return {"message": "Settings Updated"}
 
 
 @router.post("/{shop_location}/create-manager-invite-link")

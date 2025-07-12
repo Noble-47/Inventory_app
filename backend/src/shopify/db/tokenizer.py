@@ -39,7 +39,9 @@ class Tokenizer:
             select(Token).where(Token.shop_id == shop_id, Token.email == email)
         ).first()
         if existing_token and existing_token.is_valid:
-            if not existing_token.sent:
+            if existing_token.sent:
+                return existing_token
+            else:
                 try:
                     triggers.send_invite_email(self.session, token=existing_token)
                 finally:

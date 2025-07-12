@@ -1,8 +1,10 @@
-from typing import Union, Optional
+from typing import Union, Optional, Literal
 from datetime import datetime
-import uuid
+from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
+
+from shopify import permissions
 
 
 class Account(BaseModel):
@@ -17,20 +19,20 @@ class AccountCreate(Account):
 
 
 class ShopDetail(BaseModel):
-    id: uuid.UUID
+    id: UUID
     location: str
     manager: str | None = Field(default=None)
 
 
 class BusinessDetail(BaseModel):
     name: str
-    id: uuid.UUID
+    id: UUID
     shops: list[ShopDetail]
     created: datetime
 
 
 class ManagedShopDetail(BaseModel):
-    id: uuid.UUID
+    id: UUID
     location: str
     business: str
     permissions: dict[str, list]
@@ -55,13 +57,13 @@ class Login(BaseModel):
 
 
 class Shop(BaseModel):
-    id: uuid.UUID
+    id: UUID
     manager: str | None
     location: str
 
 
 class BusinessProfile(BaseModel):
-    id: uuid.UUID
+    id: UUID
     name: str
     owner: str
     shops: list[Shop]
@@ -80,7 +82,7 @@ class SettingIn(BaseModel):
 
 
 class EntitySetting(BaseModel):
-    id: uuid.UUID
+    id: UUID
     settings: list[SettingOut]
 
 
@@ -94,15 +96,30 @@ class BusinessSetting(EntitySetting):
 
 class ManagerPermissions(BaseModel):
     sales: list[str]
-    inventory: list[str]
+    inventory: Literal[
+        "can_add_new_product",
+        "can_delete_product",
+        "can_view_inventory_value",
+        "can_view_cogs",
+    ]
     orders: list[str]
     tracker: list[str]
-    analytics: list[str]
+    analytics: Literal["can_view_profits", "can_view_loss"]
+
+
+class Manager(BaseModel):
+    shop_id: UUID
+    shop_location: str
+    manager_id: int
+    firstname: str
+    lastname: str
+    permissions: ManagerPermissions
+    assigned: datetime
 
 
 class CreateInviteToken(BaseModel):
     email: str
-    permissions: Union[str, ManagerPermissions]
+    permissions: Union[ManagerPermissions, Literal["*"]]
 
 
 class Invite(BaseModel):
@@ -115,13 +132,13 @@ class Invite(BaseModel):
 
 
 class ShopInvite(BaseModel):
-    id: uuid.UUID
+    id: UUID
     location: str
     invite: Invite
 
 
 class BusinessInvite(BaseModel):
-    id: uuid.UUID
+    id: UUID
     shops: list[ShopInvite]
 
 
@@ -149,7 +166,7 @@ class TimeLine(BaseModel):
 
 
 class BusinessTimeLine(BaseModel):
-    id: uuid.UUID
+    id: UUID
     timeline: list[TimeLine]
 
 
@@ -158,4 +175,4 @@ class ShopAdd(BaseModel):
 
 
 class ShopRemove(BaseModel):
-    shop_id: uuid.UUID
+    shop_id: UUID

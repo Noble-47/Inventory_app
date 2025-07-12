@@ -9,6 +9,7 @@ from jwt.exceptions import InvalidTokenError
 from sqlmodel import Session
 import jwt
 
+from shopify.permissions import parse_permission_str
 from api.shopify import utils
 from shopify import views
 from shopify import config
@@ -150,7 +151,6 @@ def get_user_shop_association(
         "user_email": user["email"],
         "user_fullname": f"{user['firstname']} {user['lastname']}",
     }
-
     business_id = utils.get_business_id(business_name, session)
     shop_id = utils.get_shop_id(
         business_id=business_id, shop_location=shop_location, session=session
@@ -162,9 +162,9 @@ def get_user_shop_association(
     record["shop_id"] = shop_id
     record["business_id"] = business_id
 
-    if shop_location in user["business"].get(business_name, dict()):
+    if shop_location in user["business"].get(business_name, dict()).get("shops", []):
         record["association_type"] = "business_owner"
-        record["permissions"] = permissions.parse_permissions("*")
+        record["permissions"] = parse_permission_str("*")
         return record
 
     if business_name not in user["manager_record"]:
