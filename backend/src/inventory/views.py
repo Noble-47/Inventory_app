@@ -8,7 +8,7 @@ from inventory.adapters import audit
 
 def get_inventory_view(shop_id):
     session = next(db_session())
-    result = session.scalars(
+    inventory = session.scalars(
         select(InventoryView).where(InventoryView.shop_id == str(shop_id))
     ).first()
     if inventory:
