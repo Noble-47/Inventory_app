@@ -10,9 +10,8 @@ def get_inventory_view(shop_id):
     session = next(db_session())
     result = session.scalars(
         select(InventoryView).where(InventoryView.shop_id == str(shop_id))
-    )
-    if result:
-        inventory = result.first()
+    ).first()
+    if inventory:
         return inventory.model_dump()
 
 
