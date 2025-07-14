@@ -1,24 +1,35 @@
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Annotated
 import uuid
 
+from pydantic import BaseModel, Field, field_validator
+from pydantic.functional_serializers import PlainSerializer
 
-class Command:
-    pass
+from shared import datetime_now_func
+
+StrUUID = Annotated[uuid.UUID, PlainSerializer(lambda x: str(x), return_type=str)]
+
+
+class Command(BaseModel):
+
+    @field_validator("shop_id", check_fields=False)
+    def convert_to_string(cls, shop_id):
+        return str(shop_id)
 
 
 class DeleteStock(Command):
     "Delete stock"
-    shop_id: uuid.UUID
+    shop_id: StrUUID
     sku: str
 
 
 class CreateStock(Command):
     """Allow user to add stock directly during app setup period."""
 
-    shop_id: uuid.UUID
+    shop_id: StrUUID
     name: str
-    time: datetime
+    time: datetime = Field(default_factory=datetime_now_func)
     price: float
     quantity: int
 

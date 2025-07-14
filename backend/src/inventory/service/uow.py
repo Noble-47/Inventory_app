@@ -1,34 +1,34 @@
 from typing import Deque
 
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy import create_engine
-
+from inventory.adapters import repository
 from inventory.adapters import views
+from inventory.adapters import audit
 from inventory import config
 
-DEFAULT_SESSION_FACTORY = sessionmaker(
-    bind=create_engine(f"sqlite+pysqlite:///" + config.DATABASE_URL)
-)
+from inventory.adapters.orm import db_session
 
 
 class UnitOfWork:
 
-    def __init__(self, session_factory=DEFAULT_SESSION_FACTORY):
-        self.session_factory = session_factory
-
     def __enter__(self):
-        self.session = self.session_factory()
-        self.stocks = repository.SQLStockRepository(self.session)
-        self.views = views.View(self.session)
-        self.events = []
+        # self.session = self.session_factory()
+        self.prepare()
         return self
 
-    def __exit__(self):
+    def prepare(self):
+        self.session = next(db_session())
+        self.stocks = repository.SQLStockRepository(session=self.session)
+        self.views = views.View(session=self.session)
+        self.stock_audit = audit.StockAudit(session=self.session)
+        self.batch_audit = audit.BatchAudit(session=self.session)
+        self.events = []
+
+    def __exit__(self, *args, **kwargs):
         self.rollback()
         self.session.close()
 
     def commit(self):
-        for stock in self.stock.seen:
+        for stock in self.stocks.seen:
             self.events.extend(stock.events)
             stock.events.clear()
         self.session.commit()

@@ -18,7 +18,9 @@ def get_debt_details(shop_id: ShopIDDep, ref: str):
 
 
 @router.get("/debt_tracker/list", response_model=models.DebtorList)
-def view_debtors_list(shop_id: ShopIDDep, query: Annotated[models.DebtQueryParams, Query(), None]=None):
+def view_debtors_list(
+    shop_id: ShopIDDep, query: Annotated[models.DebtQueryParams, Query(), None] = None
+):
     return views.fetch_debtors(shop_id, query)
 
 

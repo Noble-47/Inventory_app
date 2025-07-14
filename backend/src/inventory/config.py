@@ -15,4 +15,4 @@ DATABASE_URL = os.environ.get(
 
 
 def get_database_url():
-    return INVENTORY_DIR / os.environ.get("DATABASE", "inventory.db")
+    return DATABASE_URL

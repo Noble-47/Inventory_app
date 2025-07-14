@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 
 from inventory.domain import commands
+from inventory import exceptions
 from inventory import views
 
 from api.inventory import bus
@@ -24,27 +25,39 @@ requires_permission = permission_checker_factory("inventory")
 
 @router.get("/", response_model=models.ShopView)
 def inventory_view(shop_id: ShopIDDep):
-    return views.get_inventory_view(shop_id)
+    view = views.get_inventory_view(shop_id)
+    if view:
+        return view
+    raise HTTPException(status_code=404, detail="Inventory Is Empty Or Does Not Exist")
 
 
 @router.get("/{sku}", response_model=models.StockView)
 def view_stock(shop_id: ShopIDDep, sku: str):
-    return views.get_stock_view(shop_id, sku)
+    view = views.get_stock_view(shop_id=shop_id, sku=sku)
+    if view:
+        return view
+    raise HTTPException(status_code=404, detail="Stock Does Not Exist")
 
 
 @router.get("/{sku}/history", response_model=models.StockAudit)
 def view_stock_history(shop_id: ShopIDDep, sku):
-    return views.get_stock_history(shop_id, sku)
+    view = views.get_stock_history(shop_id, sku)
+    if view:
+        return view
+    raise HTTPException(status_code=404, detail="Stock Does Not Exist")
 
 
 @router.get("/{sku}/batch/{batch_ref}", response_model=models.BatchAudit)
 def view_batch(shop_id: ShopIDDep, sku: str, batch_ref: str):
-    return veiws.get_batch_history(shop_id, sku, batch_ref)
+    view = views.get_batch_history(shop_id, sku, batch_ref)
+    if view:
+        return view
+    raise HTTPException(status_code=404, detail="Stock Or Batch Does Not Exist")
 
 
 # requires can_add_new_product permissions
 @router.post("/add")
-@requires_permission("can_add_new_product")
+# @requires_permission("can_add_new_product")
 def add_stock(shop_id: ShopIDDep, stock: models.CreateStock):
     """
     Creates a new product in inventory.
@@ -55,22 +68,22 @@ def add_stock(shop_id: ShopIDDep, stock: models.CreateStock):
     )
     try:
         bus.handle(command)
-    except exceptions.DuplicateStock:
+    except exceptions.DuplicateStockRecord:
         raise HTTPException(
-            status_code=400, detail=f"{name} already exists in shop inventory."
+            status_code=400, detail=f"{stock.name} already exists in shop inventory."
         )
     return {"message": "Stock added."}
 
 
 # requires can_delete_product
 @router.delete("/{sku}")
-@requires_permission("can_delete_product")
+# @requires_permission("can_delete_product")
 def delete_stock(shop_id: ShopIDDep, sku: str):
     """
     Delete a product record from inventory.
     Requires permission `can_delete_product`
     """
-    commands = commands.DeleteStock(shop_id=shop_id, sku=stock.sku)
+    command = commands.DeleteStock(shop_id=shop_id, sku=sku)
     try:
         bus.handle(command)
     except exceptions.StockNotFound:

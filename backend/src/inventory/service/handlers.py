@@ -8,22 +8,24 @@ from inventory.service.uow import UnitOfWork
 # command handlers
 def create_stock(command: commands.CreateStock, uow: UnitOfWork):
     with uow:
-        sku = sku_generator(command.stock_name, command.shop_id)
-        if uow.stocks.check_exists(sku):
-            raise exceptions.DuplicateStock(
-                f"Duplicate record of {command.stock_name} with global sku {sku}"
+        sku = sku_generator(name=command.name)
+        if uow.stocks.check_exists(sku, command.shop_id):
+            raise exceptions.DuplicateStockRecord(
+                f"Duplicate record of {command.name} with sku {sku}"
             )
         stock = uow.stocks.create(
             sku=sku,
-            name=command.stock_name,
+            name=command.name,
             shop_id=command.shop_id,
-            quantity=cmd.quantity,
+            quantity=command.quantity,
+            price=command.price,
         )
+        uow.commit()
 
 
 def delete_stock(command: commands.DeleteStock, uow: UnitOfWork):
     with uow:
-        uow.stocks.delete(command.shop_id, command.sku)
+        uow.stocks.delete(shop_id=command.shop_id, sku=command.sku)
         uow.commit()
 
 
@@ -79,61 +81,67 @@ def log_batch_event(event: events.Event, uow: UnitOfWork):
         uow.commit()
 
 
-def reflect_batch_add_in_view(event: events.BatchAddedToStock, uow: UnitOfWork):
-    with uow:
-        uow.views.update_stock_level(sku=event.sku, by=event.quantity)
-        uow.views.add_batch(
-            sku=event.sku,
-            ref=event.batch_ref,
-            price=event.price,
-            stock_in_units=event.quantity,
-            stock_time=event.datetime,
-        )
-        uow.commit()
-
-
-def reflect_stock_dispatch_in_view(event: events.DispatchedFromStock, uow: UnitOfWork):
-    with uow:
-        uow.views.update_stock_level(
-            sku=event.sku, by=event.quantity, dispatch_time=event.dispatch_time
-        )
-        uow.commit()
-
-
-def reflect_batch_dispatch_in_view(event: events.DispatchedFromBatch, uow: UnitOfWork):
-    uow.views.update_batch_quantity(
-        sku=event.sku, batch_ref=event.batch_ref, quantity=event.quantity
-    )
-    uow.commit()
-
-
-def update_batch_view_price(event: events.UpdatedBatchPrice, uow: UnitOfWork):
-    with uow:
-        uow.views.update_batch_price(
-            sku=event.sku, batch_ref=event.batch_ref, price=event.price
-        )
-        uow.commit()
-
-
-def raise_stock_view_level(event: events.IncreasedStockLevel, uow: UnitOfWork):
-    with uow:
-        uow.views.update_stock_level(sku=event.sku, by=event.by, action="increase")
-        for batch_ref, quantity in event.batch_adjustment_record:
-            uow.views.update_batch_quantity(batch_ref, quantity)
-        uow.commit()
-
-
-def lower_stock_view_level(event: events.DecreasedStockLevel, uow: UnitOfWork):
-    with uow:
-        uow.views.update_stock_level(sku=event.sku, by=event.by, action="decrease")
-        for batch_ref, quantity in event.batch_adjustment_record:
-            uow.views.update_batch_quantity(batch_ref, quantity)
-        uow.commit()
-
-
-def add_stock_to_inventory_records(event: events.StockCreated, uow: UnitOfWork):
-    pass
-
-
-def remove_stock_from_inventory_records(event: events.StockDeleted, uow: UnitOfWork):
-    pass
+# def add_batch_to_view(event: events.BatchAddedToStock, uow: UnitOfWork):
+#    with uow:
+#        uow.views.update_stock_level(sku=event.sku, quantity=event.quantity, shop_id=shop_id)
+#        uow.views.add_batch(
+#            shop_id = event.shop_id,
+#            sku=event.sku,
+#            ref=event.batch_ref,
+#            price=event.price,
+#            stock_in_units=event.quantity,
+#            stock_time=event.datetime,
+#        )
+#        uow.commit()
+#
+#
+# def reflect_stock_dispatch_in_view(event: events.DispatchedFromStock, uow: UnitOfWork):
+#    with uow:
+#        uow.views.update_stock_level(
+#            sku=event.sku, by=event.quantity, dispatch_time=event.dispatch_time
+#        )
+#        uow.commit()
+#
+#
+# def reflect_batch_dispatch_in_view(event: events.DispatchedFromBatch, uow: UnitOfWork):
+#    with uow:
+#        uow.views.update_batch_quantity(
+#            sku=event.sku, batch_ref=event.batch_ref, quantity=event.quantity
+#        )
+#        uow.commit()
+#
+#
+# def update_batch_view_price(event: events.UpdatedBatchPrice, uow: UnitOfWork):
+#    with uow:
+#        uow.views.update_batch_price(
+#            sku=event.sku, batch_ref=event.batch_ref, price=event.price
+#        )
+#        uow.commit()
+#
+#
+# def raise_stock_view_level(event: events.IncreasedStockLevel, uow: UnitOfWork):
+#    with uow:
+#        uow.views.change_stock_level(sku=event.sku, by=event.by, action="increase")
+#        for batch_ref, quantity in event.batch_adjustment_record:
+#            uow.views.update_batch_quantity(batch_ref, quantity)
+#        uow.commit()
+#
+#
+# def lower_stock_view_level(event: events.DecreasedStockLevel, uow: UnitOfWork):
+#    with uow:
+#        uow.views.change_stock_level(sku=event.sku, by=event.by, action="decrease")
+#        for batch_ref, quantity in event.batch_adjustment_record:
+#            uow.views.update_batch_quantity(batch_ref, quantity)
+#        uow.commit()
+#
+#
+# def add_stock_to_inventory_records(event: events.StockCreated, uow: UnitOfWork):
+#    with uow:
+#        uow.views.add_stock_to_inventory(shop_id=event.shop_id, sku=event.sku, level=event.level, name=event.name)
+#        uow.commit()
+#
+#
+# def remove_stock_from_inventory_records(event: events.StockDeleted, uow: UnitOfWork):
+#    with uow:
+#        uow.views.delete_stock_from_inventory(shop_id=event.shop_id, sku=event.sku)
+#        uow.commit()

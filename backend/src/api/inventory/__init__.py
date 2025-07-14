@@ -1,9 +1,9 @@
 from fastapi import FastAPI
 
 from inventory.adapters import orm
-from inventory.bootstrap import simple_bus
+from inventory.bootstrap import bootstrap
 
-bus = simple_bus()
+bus = bootstrap()
 
 
 def setup(app: FastAPI):
@@ -14,7 +14,7 @@ def setup(app: FastAPI):
 
     @app.on_event("startup")
     def on_startup():
-        orm.create_tables
+        orm.create_tables()
 
     @app.get("/services/inventory", tags=["Services"])
     def root():

@@ -23,23 +23,33 @@ class MessageBus:
         queue = deque()
         queue.append(message)
         while queue:
+            message = queue.popleft()
             if isinstance(message, commands.Command):
-                self.handle_command(message, uow)
-            if isinstance(message, events.Event):
-                self.handle_events(message, uow)
+                self.handle_command(message)
+            elif isinstance(message, events.Event):
+                self.handle_events(message)
+            # elif issubclass(message, commands.Command):
+            #    raise ValueError("You passed in the class instead of an instance")
             else:
                 raise TypeError(
                     f"Message must by of type {events.Event} or {commands.Command}. Got {type(message)}"
                 )
 
-            queue.extend(self.uow.collect_events())
+            queue.extend(self.uow.collect_new_events())
+            print(queue)
 
-    def handle_events(self, event: events.Event, uow: UnitOfWork):
+    def handle_events(self, event: events.Event):
         handlers = self.event_handlers.get(type(event), list())
+        print(f"Received Event: {event!r}")
         for handler in handlers:
+            print(f"Handling Event {event!r} with {handler!r}")
             handler(event)
+            print("Done")
 
-    def handle_command(self, command: commands.Command, uow: UnitOfWork):
+    def handle_command(self, command: commands.Command):
         handlers = self.command_handlers.get(type(command), list())
+        print(f"Received Command: {command!r}")
         for handler in handlers:
-            handler(command, uow)
+            print(f"Handling Command {command!r} with {handler!r}")
+            handler(command)
+            print("Done")

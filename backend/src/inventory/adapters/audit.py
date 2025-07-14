@@ -3,6 +3,7 @@ import uuid
 import json
 
 from pydantic import BaseModel, Field
+from sqlalchemy import select
 
 from inventory.domain import events
 
@@ -11,18 +12,20 @@ class StockLog(BaseModel):
     id: int | None = Field(default=None, serialization_alias="audit_id")
     shop_id: uuid.UUID
     sku: str
-    time: datetime
+    action: str = Field(validation_alias="name")
+    event_time: datetime
     description: str
     event_hash: str
     payload: str
 
 
-class BatchLog(BaseModel):
+class BatchLog(StockLog):
     id: int | None = Field(default=None, serialization_alias="audit_id")
-    sku: str
     shop_id: uuid.UUID
+    sku: str
     batch_ref: str
-    time: datetime
+    action: str = Field(validation_alias="name")
+    event_time: datetime
     description: str
     event_hash: str
     payload: str
@@ -36,37 +39,26 @@ class Audit:
         self.session = session
         self.events = events or []
 
-    def add(self, event: events.Event):
-        serialized_event = event.serialize()
-        serialized_event["payload"] = json.dumps(serialized_event["payload"])
-        audit = self.Model(**serialized_event)
-        self.session.add(audit)
-
     def get(self, audit_id: int):
         audit = self.session.exec(select(Model).where(Model.id == audit_id)).first()
         return audit
 
 
-# class ShopAudit:
-#
-#    def fetch(self, shop_id: uuid.UUID):
-#        audits = self.session.exec(
-#            select(StockLog)
-#            .where(StockLog.shop_id == shop_id)
-#            .order_by(StockLog.time)
-#        ).all()
-#        return audits
-
-
 class StockAudit(Audit):
     Model = StockLog
 
+    def add(self, event: events.Event):
+        serialized_event = event.serialize()
+        serialized_event["payload"] = json.dumps(serialized_event["payload"])
+        audit = StockLog(**serialized_event)
+        self.session.add(audit)
+
     def fetch(self, shop_id: uuid.UUID, sku: str):
-        audits = self.session.exec(
+        audits = self.session.scalars(
             select(StockLog)
             .where(StockLog.sku == sku)
             .where(StockLog.shop_id == shop_id)
-            .order_by(StockLog.time)
+            .order_by(StockLog.event_time)
         ).all()
         return audits
 
@@ -74,18 +66,24 @@ class StockAudit(Audit):
 class BatchAudit(Audit):
     Model = BatchLog
 
+    def add(self, event: events.Event):
+        serialized_event = event.serialize()
+        serialized_event["payload"] = json.dumps(serialized_event["payload"])
+        audit = BatchLog(**serialized_event)
+        self.session.add(audit)
+
     def fetch_stock_log(self, sku: str):
         audits = self.session.exec(
-            select(BatchLog).where(BatchLog.sku == sku).order_by(BatchLog.time)
+            select(BatchLog).where(BatchLog.sku == sku).order_by(BatchLog.event_time)
         ).all()
         return audits
 
-    def fetch(self, batch_ref: str):
-        audits = self.session.exec(
+    def fetch(self, sku, shop_id, batch_ref: str):
+        audits = self.session.scalars(
             select(BatchLog)
             .where(BatchLog.batch_ref == batch_ref)
             .where(BatchLog.sku == sku)
             .where(BatchLog.shop_id == shop_id)
-            .order_by(BatchLog.time)
+            .order_by(BatchLog.event_time)
         ).all()
         return audits

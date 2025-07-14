@@ -9,35 +9,15 @@ from inventory.adapters.orm import start_mappers
 from inventory.service.message_bus import MessageBus
 
 
-def simple_bus(start_mapper=True):
-    if start_mapper:
-        start_mappers()
-
-    uow = UnitOfWork()
-    command_handlers = {
-        commands.CreateStock: [partial(handlers.create_stock, uow=uow)],
-        commands.DeleteStock: [partial(handlers.delete_stock, uow=uow)],
-    }
-    event_handlers = {
-        events.StockCreated: [
-            partial(handlers.add_stock_to_inventory_records, uow=uow)
-        ],
-        events.StockDeleted: [
-            partial(handlers.remove_stock_from_inventory_records, uow=uow)
-        ],
-    }
-    bus = MessageBus(command_handlers, event_handlers, uow)
-    return bus
-
-
 def bootstrap(start_mapper=True):
     if start_mapper:
         start_mappers()
-
     uow = UnitOfWork()
     command_handlers = inject_command_handlers(uow)
     event_handlers = inject_event_handlers(uow)
-    bus = MessageBus(command_handlers, event_handlers, uow)
+    bus = MessageBus(
+        command_handlers=command_handlers, event_handlers=event_handlers, uow=uow
+    )
     return bus
 
 
@@ -52,32 +32,22 @@ def inject_command_handlers(uow):
             partial(handlers.update_batch_quantity, uow=uow)
         ],
         commands.UpdateBatchPrice: [partial(handlers.update_batch_price, uow=uow)],
+        commands.CreateStock: [partial(handlers.create_stock, uow=uow)],
+        commands.DeleteStock: [partial(handlers.delete_stock, uow=uow)],
     }
 
 
 def inject_event_handlers(uow):
+    return {}
     return {
-        events.BatchAddedToStock: [handlers.reflect_batch_add_in_view, log_batch_event],
-        events.DispatchFromStock: [
-            handlers.reflect_stock_dispatch_in_view,
-            handlers.log_stock_event,
-        ],
-        events.DispatchFromBatch: [
-            handlers.reflect_batch_dispatch_in_view,
-            handlers.log_batch_event,
-        ],
-        events.UpdatedBatchPrice: [
-            handlers.update_batch_view_price,
-            handlers.log_batch_event,
-        ],
-        events.IncreasedStockLevel: [
-            handlers.raise_stock_view_level,
-            handlers.log_stock_event,
-        ],
-        events.DecreasedStockLevel: [
-            handlers.lower_stock_view_level,
-            handlers.log_stock_event,
-        ],
-        events.BatchSoldOut: [handlers.log_batch_event],
-        events.StockSoldOut: [handlers.log_stock_event],
+        events.BatchAddedToStock: [partial(handlers.log_batch_event, uow=uow)],
+        events.DispatchedFromStock: [partial(handlers.log_stock_event, uow=uow)],
+        events.DispatchedFromBatch: [partial(handlers.log_batch_event, uow=uow)],
+        events.UpdatedBatchPrice: [partial(handlers.log_batch_event, uow=uow)],
+        events.IncreasedStockLevel: [partial(handlers.log_stock_event, uow=uow)],
+        events.DecreasedStockLevel: [partial(handlers.log_stock_event, uow=uow)],
+        events.BatchSoldOut: [partial(handlers.log_batch_event, uow=uow)],
+        events.StockSoldOut: [partial(handlers.log_stock_event, uow=uow)],
+        events.StockCreated: [partial(handlers.log_stock_event, uow=uow)],
+        events.StockDeleted: [partial(handlers.log_stock_event, uow=uow)],
     }

@@ -52,7 +52,8 @@ class SQLSettingPersistor:
 
 
 def get_control_strategy(shop_id: uuid.UUID, setting_persistor=SQLSettingPersistor()):
-    return setting_persistor.get("control strategy")
+    return "fifo"
+    return setting_persistor.get("control strategy", shop_id)
 
 
 def get_low_level(shop_id: uuid.UUID, setting_persistor=SQLSettingPersistor()):

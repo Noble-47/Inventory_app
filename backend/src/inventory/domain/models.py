@@ -2,9 +2,12 @@ from __future__ import annotations
 from dataclasses import dataclass, InitVar, field
 from collections import namedtuple
 from datetime import datetime
+from typing import ClassVar
 from enum import Enum
 import hashlib
 import pytz
+
+from shared import datetime_now_func
 
 from inventory.exceptions import OutOfStock
 from inventory.domain import stock_control
@@ -15,9 +18,13 @@ from inventory.config import TIMEZONE as timezone
 Dispatch = namedtuple("Dispatch", "quantity from_")
 
 
-def sku_generator(shop_id: str, name: str):
-    identifier = f"{shop_id[:5]}-{name.strip().upper()[:3]}"
+def sku_generator(name: str):
+    identifier = f"{name.strip().upper()}"
     return f"{identifier}"
+
+
+def manual_batch_ref_generator():
+    return f"MANUAL-{datetime_now_func().strftime('%Y%m%d-%H%M%S')}"
 
 
 @dataclass
@@ -65,6 +72,7 @@ class Stock:
     control_strategy: InitVar[str, None] = None
     offset: int = 0
     last_sale: datetime = None
+    events: ClassVar[list] = []
 
     def __len__(self):
         return len(self.batches)
@@ -75,6 +83,9 @@ class Stock:
     def __getitem__(self, ref: str):
         "Return batch identified by ref."
         return next(batch for batch in self.batches if batch.ref == ref)
+
+    def __hash__(self):
+        return hash((self.sku, self.shop_id))
 
     def __post_init__(self, control_strategy=None):
         if control_strategy:
@@ -89,7 +100,7 @@ class Stock:
         return self.controller.compute_inventory_value()
 
     def set_control_strategy(self, control_strategy: str):
-        self.controller = stock_control.get_controller(control_strategy)
+        self.controller = stock_control.get_controller(self, control_strategy)
 
     def add(self, ref: str, quantity: float, price: float, timestamp: float):
         time = datetime.fromtimestamp(timestamp, tz=timezone)
@@ -123,13 +134,19 @@ class Stock:
             quantity -= dispatch.quantity
             self.events.append(
                 events.DispatchedFromBatch(
-                    sku=self.sku, batch_ref=batch.ref, quantity=dispatch.quantity
+                    sku=self.sku,
+                    shop_id=self.shop_id,
+                    batch_ref=batch.ref,
+                    quantity=dispatch.quantity,
                 )
             )
             if batch.quantity == 0:
                 self.events.append(
                     events.BatchSoldOut(
-                        sku=self.sku, batch_ref=batch.ref, when=dispatch_time
+                        sku=self.sku,
+                        shop_id=self.shop_id,
+                        batch_ref=batch.ref,
+                        when=dispatch_time,
                     )
                 )
             dispatch_list.append(dispatch)
@@ -155,7 +172,11 @@ class Stock:
         # raises StopIteration if batch not found
         batch = self.get_batch(batch_ref)
         batch.price = price
-        self.events.append(events.UpdatedBatchPrice(self.sku, batch.ref, price))
+        self.events.append(
+            events.UpdatedBatchPrice(
+                sku=self.sku, shop_id=self.shop_id, batch_ref=batch.ref, price=price
+            )
+        )
 
     def update_batch_quantity(self, batch_ref, quantity):
         batch = self.get_batch(batch_ref)

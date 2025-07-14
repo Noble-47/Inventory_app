@@ -20,7 +20,7 @@ class Stock(BaseModel):
     sku: str
     name: str
     level: int
-    last_sale: datetime
+    last_sale: datetime | None = Field(default=None)
 
 
 class ShopView(BaseModel):
@@ -34,7 +34,7 @@ class ShopView(BaseModel):
 class Batch(BaseModel):
     ref: str
     price: float
-    available: int
+    available: int = Field(validation_alias="quantity")
     stock_time: datetime
     stock_in_units: int
 

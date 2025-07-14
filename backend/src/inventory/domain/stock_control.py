@@ -48,7 +48,7 @@ class Controller:
 
         return sum(
             (batch.stock_in_units - batch.quantity) * batch.price
-            for batch in stock
+            for batch in self.stock
             if is_between(batch.stock_time, start_date, end_date)
         )
 

@@ -5,11 +5,12 @@ from sqlalchemy import (
     String,
     DateTime,
     Enum,
+    ForeignKey,
     ForeignKeyConstraint,
     UniqueConstraint,
 )
 
-from sqlalchemy.orm import registry, relationship, column_property
+from sqlalchemy.orm import registry, relationship, column_property, Session
 from sqlalchemy import Table, Column, event, select
 from sqlalchemy import create_engine
 
@@ -31,13 +32,11 @@ batch_table = Table(
     Column("sku", String(30)),
     Column("shop_id", String(30)),
     Column("stock_in_units", Integer),
-    Column("quantity", Integer),  # consider adding an index here
+    Column("quantity", Integer),
     Column("price", Float),
     Column("stock_time", DateTime),
     ForeignKeyConstraint(
-        ["sku", "shop_id"],
-        ["stock.sku", "stock.shop_id"],
-        ondelete="CASCADE",
+        ["sku", "shop_id"], ["stock.sku", "stock.shop_id"], name="fidx_sku_shop_id"
     ),
 )
 
@@ -45,7 +44,7 @@ stock_table = Table(
     "stock",
     metadata,
     Column("sku", String(30), primary_key=True),
-    Column("shop_id", String(30)),
+    Column("shop_id", ForeignKey("inventory.shop_id")),
     Column("name", String, nullable=False),
     Column("version_number", Integer, default=0, nullable=False),
     Column("offset", Integer, default=0),
@@ -53,26 +52,12 @@ stock_table = Table(
     UniqueConstraint("sku", "shop_id", name="shop_id_stock_sku_uix"),
 )
 
-inventory_view_table = Table(
-    "inventory_view",
+inventory_table = Table(
+    "inventory",
     metadata,
     Column("shop_id", String(30), primary_key=True, unique=True),
-    Column("cogs", Float, nullable=False),
-    Column("value", Float, nullable=False),
 )
 
-
-stock_view_table = Table(
-    "stock_view",
-    metadata,
-    Column("id", Integer, primary_key=True),
-    Column("shop_id", String, nullable=False),
-    Column("sku", String, nullable=False, unique=True),
-    Column("cogs", Float, nullable=False),
-    Column("value", Float, nullable=False),
-    Column("level", Integer, nullable=False),
-    UniqueConstraint("sku", "shop_id", name="shop_id_stock_sku_uix"),
-)
 
 setting_table = Table(
     "inventory_setting",
@@ -89,8 +74,9 @@ stock_log_table = Table(
     Column("id", Integer, primary_key=True),
     Column("shop_id", String),
     Column("sku", String),
+    Column("action", String),
     Column("description", String),
-    Column("time", DateTime),
+    Column("event_time", DateTime),
     Column("event_hash", String, unique=True),
     Column("payload", String),
 )
@@ -101,20 +87,30 @@ batch_log_table = Table(
     Column("id", Integer, primary_key=True),
     Column("shop_id", String),
     Column("sku", String),
+    Column("action", String),
     Column("batch_ref", String),
     Column("description", String),
-    Column("time", DateTime),
+    Column("event_time", DateTime),
     Column("event_hash", String, unique=True),
     Column("payload", String),
 )
 
 
+engine = create_engine(get_database_url())
+
+
 def create_tables():
-    engine = create_engine(get_database_url())
     metadata.create_all(engine)
 
 
+def db_session():
+    with Session(engine) as session:
+        yield session
+
+
 def start_mappers():
+    mapper_registry.map_imperatively(BatchLog, batch_log_table)
+    mapper_registry.map_imperatively(StockLog, stock_log_table)
     mapper_registry.map_imperatively(Batch, batch_table)
     mapper_registry.map_imperatively(
         Stock,
@@ -125,42 +121,37 @@ def start_mappers():
             ),
         },
         version_id_col=stock_table.c.version_number,
-        version_id_generator=False,
+        # version_id_generator=False,
     )
     mapper_registry.map_imperatively(
         InventoryView,
-        inventory_view_table,
+        inventory_table,
         properties={
             "stocks": relationship(
-                Stock,
-                primaryjoin="and_(Stock.shop_id == Inventory.shop_id)",
+                StockView,
+                primaryjoin="and_(StockView.shop_id == InventoryView.shop_id)",
             )
         },
     )
     mapper_registry.map_imperatively(
         StockView,
-        stock_view_table,
+        stock_table,
         properties={
             "batches": relationship(
                 Batch,
-                primaryjoin="and_(Batch.sku == StockView.sku, Batch.shop_id == StockView.shop_id)",
-            ),
-            "last_sale": column_property(
-                select(stock_table.c.last_sale)
-                .where(stock_table.c.sku == stock_view_table.c.sku)
-                .where(stock_table.c.shop_id == stock_view_table.c.shop_id)
-                .correlate_except(stock_table)
-                .scalar_subquery()
+                primaryjoin="and_(Batch.sku == StockView.sku)",
+                order_by=Batch.stock_time,
+                viewonly=True,
             ),
         },
     )
-    mapper_registry.map_imperatively(BatchLog, batch_log_table)
-    mapper_registry.map_imperatively(StockLog, stock_log_table)
 
 
 @event.listens_for(Stock, "load")
+@event.listens_for(StockView, "load")
 def stock_config(stock, context):
     # get control strategy for stock
     control_strategy = get_control_strategy(stock.shop_id)
     stock.set_control_strategy(control_strategy)
-    stock.events = []
+    if isinstance(stock, Stock):
+        stock.events = []
