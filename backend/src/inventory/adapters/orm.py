@@ -106,7 +106,6 @@ def create_tables():
 def db_session():
     with Session(engine) as session:
         yield session
-        session.close()
 
 
 def start_mappers():
@@ -131,6 +130,7 @@ def start_mappers():
             "stocks": relationship(
                 StockView,
                 primaryjoin="and_(StockView.shop_id == InventoryView.shop_id)",
+                lazy="selectin",
             )
         },
     )
@@ -143,6 +143,7 @@ def start_mappers():
                 primaryjoin="and_(Batch.sku == StockView.sku)",
                 order_by=Batch.stock_time,
                 viewonly=True,
+                lazy="selectin",
             ),
         },
     )
