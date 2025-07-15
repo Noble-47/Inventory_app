@@ -106,6 +106,7 @@ def create_tables():
 def db_session():
     with Session(engine) as session:
         yield session
+        session.close()
 
 
 def start_mappers():
