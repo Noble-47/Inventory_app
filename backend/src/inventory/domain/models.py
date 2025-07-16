@@ -231,3 +231,8 @@ class Stock:
                     adjustment_record=record,
                 )
             )
+
+
+@dataclass
+class Inventory:
+    shop_id: str

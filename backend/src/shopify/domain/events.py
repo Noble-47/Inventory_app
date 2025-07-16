@@ -71,6 +71,7 @@ class AddedNewShop(Event):
 
 class RemovedShop(Event):
     business_id: SerializableUUID
+    shop_id: SerializableUUID
     location: str
     description: str = Field(default="Deleted Shop From Business")
 
@@ -98,3 +99,11 @@ class CreatedManagerInviteToken(Event):
     email: str
     token_str: str
     description: str = Field(default="Created Manager Invite")
+
+
+class UpdatedShopSetting(Event):
+    business_id: SerializableUUID
+    shop_id: SerializableUUID | None = None
+    tag: str
+    name: str
+    value: str

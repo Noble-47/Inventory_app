@@ -36,7 +36,8 @@ class Registry(db.BaseRepo):
             business_id = business["business_id"]
             shops = self.session.exec(
                 select(models.ShopRegistry.shop_id, models.ShopRegistry.location).where(
-                    models.ShopRegistry.business_id == business_id
+                    models.ShopRegistry.business_id == business_id,
+                    models.ShopRegistry.deleted == False,
                 )
             ).all()
             business["shops"] = dict((shop[1], shop[0]) for shop in shops)
@@ -54,6 +55,7 @@ class Registry(db.BaseRepo):
             )
             .where(
                 models.ShopRegistry.manager_id == account_id,
+                models.ShopRegistry.deleted == False,
             )
         ).all()
 

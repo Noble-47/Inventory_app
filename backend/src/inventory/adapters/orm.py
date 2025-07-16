@@ -1,3 +1,5 @@
+from contextlib import contextmanager
+
 from sqlalchemy import (
     Boolean,
     Integer,
@@ -17,8 +19,8 @@ from sqlalchemy import create_engine
 from inventory.settings import get_control_strategy
 from inventory.config import get_database_url
 
-from inventory.domain.models import Stock, Batch
 from inventory.adapters.audit import StockLog, BatchLog
+from inventory.domain.models import Stock, Batch, Inventory
 from inventory.domain.read_models import StockView, InventoryView
 
 
@@ -63,9 +65,10 @@ setting_table = Table(
     "inventory_setting",
     metadata,
     Column("id", Integer, primary_key=True),
-    Column("shop_id", String, unique=True, nullable=False),
-    Column("name", String, unique=True, nullable=False),
+    Column("shop_id", String, nullable=False),
+    Column("name", String, nullable=False),
     Column("value", String, nullable=False),
+    UniqueConstraint("shop_id", "name", name="idx_unique_name_shop_id"),
 )
 
 stock_log_table = Table(
@@ -96,22 +99,31 @@ batch_log_table = Table(
 )
 
 
-engine = create_engine(get_database_url())
+engine = create_engine(
+    get_database_url(),
+    connect_args={"check_same_thread": False},
+    # , pool_size=20, max_overflow=10)
+)
 
 
 def create_tables():
     metadata.create_all(engine)
 
 
+@contextmanager
 def db_session():
-    with Session(engine) as session:
+    session = Session(engine)
+    try:
         yield session
+    finally:
+        session.close()
 
 
 def start_mappers():
     mapper_registry.map_imperatively(BatchLog, batch_log_table)
     mapper_registry.map_imperatively(StockLog, stock_log_table)
     mapper_registry.map_imperatively(Batch, batch_table)
+    mapper_registry.map_imperatively(Inventory, inventory_table)
     mapper_registry.map_imperatively(
         Stock,
         stock_table,

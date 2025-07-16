@@ -31,7 +31,7 @@ class EmailNotifier:
 
             To accept the invitation and get started, please click the link below:
 
-            👉 {config.MANAGER_INVITE_FORM_URL}/{invitation_token}
+            👉 localhost:4200/verify-manager/{invitation_token}
 
             If you weren’t expecting this invitation or don’t recognize the business, you can safely ignore this email.
 

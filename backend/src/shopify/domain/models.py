@@ -145,7 +145,9 @@ class Business(SQLModel, table=True, frozen=True):
         record = self.search_registry(shop_id)
         record.deleted = True
         self.events.append(
-            events.RemovedShop(business_id=self.id, location=record.location)
+            events.RemovedShop(
+                business_id=self.id, shop_id=shop_id, location=record.location
+            )
         )
 
     def get_or_create_manager(self, manager_id, shop_id):

@@ -73,7 +73,7 @@ async def add_shop(shop: models.ShopAdd, business_id: BusinessIDDep):
     try:
         bus.handle(cmd)
     except exceptions.DuplicateShopRecord:
-        return HTTPException(status_code=400, detail="Duplicate Shop")
+        raise HTTPException(status_code=400, detail="Duplicate Shop")
     return {"message": f"New Shop Created : {cmd.location}"}
 
 
@@ -83,5 +83,5 @@ async def remove_shop(shop: models.ShopRemove, business_id: BusinessIDDep):
     try:
         bus.handle(cmd)
     except Exception as err:
-        return HTTPException(status_code=400, detail=str(err))
-    return {"message": f"Delete Shop : {cmd.shop_id}"}
+        raise HTTPException(status_code=400, detail=str(err))
+    return {"message": f"Deleted Shop : {cmd.shop_id}"}
