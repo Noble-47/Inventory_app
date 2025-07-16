@@ -1,3 +1,5 @@
+import asyncio
+
 from fastapi import APIRouter, Depends, HTTPException
 
 from inventory.domain import commands
@@ -24,32 +26,32 @@ requires_permission = permission_checker_factory("inventory")
 
 
 @router.get("/", response_model=models.ShopView)
-def inventory_view(shop_id: ShopIDDep):
-    view = views.get_inventory_view(shop_id)
+async def inventory_view(shop_id: ShopIDDep):
+    view = await views.get_inventory_view(shop_id)
     if view:
         return view
     raise HTTPException(status_code=404, detail="Inventory Is Empty Or Does Not Exist")
 
 
 @router.get("/{sku}", response_model=models.StockView)
-def view_stock(shop_id: ShopIDDep, sku: str):
-    view = views.get_stock_view(shop_id=shop_id, sku=sku)
+async def view_stock(shop_id: ShopIDDep, sku: str):
+    view = await views.get_stock_view(shop_id=shop_id, sku=sku)
     if view:
         return view
     raise HTTPException(status_code=404, detail="Stock Does Not Exist")
 
 
 @router.get("/{sku}/history", response_model=models.StockAudit)
-def view_stock_history(shop_id: ShopIDDep, sku):
-    view = views.get_stock_history(shop_id, sku)
+async def view_stock_history(shop_id: ShopIDDep, sku):
+    view = await views.get_stock_history(shop_id, sku)
     if view:
         return view
     raise HTTPException(status_code=404, detail="Stock Does Not Exist")
 
 
 @router.get("/{sku}/batch/{batch_ref}", response_model=models.BatchAudit)
-def view_batch(shop_id: ShopIDDep, sku: str, batch_ref: str):
-    view = views.get_batch_history(shop_id, sku, batch_ref)
+async def view_batch(shop_id: ShopIDDep, sku: str, batch_ref: str):
+    view = await views.get_batch_history(shop_id, sku, batch_ref)
     if view:
         return view
     raise HTTPException(status_code=404, detail="Stock Or Batch Does Not Exist")
