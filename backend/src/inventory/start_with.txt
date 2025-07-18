@@ -1,6 +1,0 @@
-batch add doesn't show in batch log
-link shopify and inventory, such that when shop is created, inventory is automatically setup
-link shopify setting and inventory setting
-crud operations
-
-head over to orders

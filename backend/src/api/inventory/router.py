@@ -30,7 +30,7 @@ async def inventory_view(shop_id: ShopIDDep):
     view = await views.get_inventory_view(shop_id)
     if view:
         return view
-    raise HTTPException(status_code=404, detail="Inventory Is Empty Or Does Not Exist")
+    raise HTTPException(status_code=404, detail="Inventory is empty or does not exist")
 
 
 @router.get("/{sku}", response_model=models.StockView)
@@ -38,23 +38,23 @@ async def view_stock(shop_id: ShopIDDep, sku: str):
     view = await views.get_stock_view(shop_id=shop_id, sku=sku)
     if view:
         return view
-    raise HTTPException(status_code=404, detail="Stock Does Not Exist")
+    raise HTTPException(status_code=404, detail="Stock does not exist")
 
 
 @router.get("/{sku}/history", response_model=models.StockAudit)
 async def view_stock_history(shop_id: ShopIDDep, sku):
-    view = await views.get_stock_history(shop_id, sku)
+    view = await views.get_stock_history(shop_id=shop_id, sku=sku)
     if view:
         return view
-    raise HTTPException(status_code=404, detail="Stock Does Not Exist")
+    raise HTTPException(status_code=404, detail="Stock Log is empty or stock does not exist")
 
 
 @router.get("/{sku}/batch/{batch_ref}", response_model=models.BatchAudit)
 async def view_batch(shop_id: ShopIDDep, sku: str, batch_ref: str):
-    view = await views.get_batch_history(shop_id, sku, batch_ref)
+    view = await views.get_batch(shop_id, sku, batch_ref)
     if view:
         return view
-    raise HTTPException(status_code=404, detail="Stock Or Batch Does Not Exist")
+    raise HTTPException(status_code=404, detail="Stock or batch log is empty or does not exist")
 
 
 # requires can_add_new_product permissions
@@ -86,6 +86,7 @@ def delete_stock(shop_id: ShopIDDep, sku: str):
     Requires permission `can_delete_product`
     """
     command = commands.DeleteStock(shop_id=shop_id, sku=sku)
+    print(shop_id)
     try:
         bus.handle(command)
     except exceptions.StockNotFound:

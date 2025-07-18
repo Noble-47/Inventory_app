@@ -34,8 +34,8 @@ class CreateStock(Command):
     quantity: int
 
 
-@dataclass
 class AddBatchToStock(Command):
+    shop_id: StrUUID
     sku: str
     batch_ref: str
     quantity: int
@@ -43,22 +43,43 @@ class AddBatchToStock(Command):
     timestamp: float
 
 
-@dataclass
-class DispatchGoodsFromStock(Command):
+class DispatchGoods(Command):
+    shop_id: StrUUID
     sku: str
     quantity: int
-    timestamp: float
+    timestamp: datetime
 
 
-@dataclass
 class UpdateBatchPrice(Command):
+    shop_id: StrUUID
     sku: str
     batch_ref: str
     price: float
 
 
-@dataclass
 class UpdateBatchQuantity(Command):
+    shop_id: StrUUID
     sku: str
     batch_ref: str
     quantity: int
+
+
+class UpdateStockQuantity(Command):
+    shop_id: StrUUID
+    sku: str
+    quantity: float
+    incremental: bool
+
+
+class UpdateSetting(Command):
+    shop_id: StrUUID
+    name: str
+    value: str
+
+
+class CreateInventory(Command):
+    shop_id: StrUUID
+
+
+class DeleteInventory(Command):
+    shop_id: StrUUID

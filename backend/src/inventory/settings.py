@@ -2,7 +2,7 @@
 User defined settings that should be persisted
 """
 
-from inventory.config import SETTINGS_PATH
+from inventory.config import DATABASE_URL, DEFAULT_SETTINGS
 from contextlib import closing
 import sqlite3
 import uuid
@@ -19,17 +19,12 @@ setting_id |   shop_id    |      name        | value |
 
 class SQLSettingPersistor:
 
-    def __init__(self, setting_db=SETTINGS_PATH):
+    def __init__(self, setting_db=DATABASE_URL):
         self.db = setting_db
 
     @property
     def connection(self):
-        return self.connection()
-
-    def cursor(self):
-        conn = self.connection
-        yield closing(conn.cursor())
-        conn.close()
+        return sqlite3.connect(self.db)
 
     def get(self, name: str, shop_id: uuid.UUID):
         setting_name = name.upper()
@@ -50,6 +45,24 @@ class SQLSettingPersistor:
             )
         return inventory_value
 
+    def update(self, shop_id, name, value):
+        name = name.upper()
+        conn = self.connection
+        with closing(conn.cursor()) as cursor:
+            cursor.execute(
+                """
+                INSERT INTO inventory_setting (value, name, shop_id)
+                VALUES (:1, :2, :3)
+                ON CONFLICT
+                DO
+                UPDATE SET value = :1
+                WHERE name = :2
+                AND shop_id = :3
+            """,
+                (value, name, shop_id),
+            )
+            conn.commit()
+
 
 def get_control_strategy(shop_id: uuid.UUID, setting_persistor=SQLSettingPersistor()):
     return "fifo"
@@ -58,3 +71,8 @@ def get_control_strategy(shop_id: uuid.UUID, setting_persistor=SQLSettingPersist
 
 def get_low_level(shop_id: uuid.UUID, setting_persistor=SQLSettingPersistor()):
     return setting_persistor.get("low level")
+
+
+def apply_default_settings(shop_id, setting_persistor=SQLSettingPersistor()):
+    for name, value in DEFAULT_SETTINGS:
+        setting_persistor.update(shop_id, name, value)

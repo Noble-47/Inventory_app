@@ -19,12 +19,12 @@ Dispatch = namedtuple("Dispatch", "quantity from_")
 
 
 def sku_generator(name: str):
-    identifier = f"{name.strip().upper()}"
+    identifier = f"{name.strip().upper().replace(" ", "-")}"
     return f"{identifier}"
 
 
-def manual_batch_ref_generator():
-    return f"MANUAL-{datetime_now_func().strftime('%Y%m%d-%H%M%S')}"
+def manual_batch_ref_generator(prefix="MANUAL"):
+    return f"{prefix}-{datetime_now_func().strftime('%Y%m%d-%H%M%S')}"
 
 
 @dataclass
@@ -68,9 +68,7 @@ class Stock:
     sku: str
     name: str
     batches: list[Batch] = field(default_factory=list)
-    version_number: int = 0
     control_strategy: InitVar[str, None] = None
-    offset: int = 0
     last_sale: datetime = None
     events: ClassVar[list] = []
 
@@ -102,8 +100,10 @@ class Stock:
     def set_control_strategy(self, control_strategy: str):
         self.controller = stock_control.get_controller(self, control_strategy)
 
-    def add(self, ref: str, quantity: float, price: float, timestamp: float):
-        time = datetime.fromtimestamp(timestamp, tz=timezone)
+    def add(
+        self, ref: str, quantity: float, price: float, time: datetime
+    ):  # timestamp: float):
+        # time = datetime.fromtimestamp(timestamp, tz=timezone)
         new_batch = Batch(self.sku, ref, quantity, price, time)
         self.batches.append(new_batch)
         self.events.append(
@@ -112,8 +112,24 @@ class Stock:
             )
         )
 
-    def dispatch(self, quantity: int, timestamp: float):
-        dispatch_time = datetime.fromtimestamp(timestamp, tz=timezone)
+    def update_quantity(
+        self, quantity: int, increment: bool, price: float | None = None
+    ):
+        if increment:
+            # Trigger correction batch add
+            self.add(
+                ref=manual_batch_ref_generator("CORRECTION"),
+                quantity=quantity,
+                timestamp=timestamp,
+                price=price,
+                time=datetime_now_func(),
+            )
+        else:
+            # Trigger correction dispatch
+            self.dispatch(quantity, dispatch_time=datetime_now_func())
+
+    def dispatch(self, quantity: int, dispatch_time: datetime):
+        # dispatch_time = datetime.fromtimestamp(timestamp, tz=timezone)
         if quantity > self.level:
             raise OutOfStock(f"Low Stock Level : Stock<{self.sku}>.")
         dispatch_list = self._dispatch_from_batches_(quantity, dispatch_time)

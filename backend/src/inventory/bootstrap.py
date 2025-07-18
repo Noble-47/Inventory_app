@@ -25,9 +25,7 @@ def inject_command_handlers(uow):
     return {
         commands.CreateStock: [partial(handlers.create_stock, uow=uow)],
         commands.AddBatchToStock: [partial(handlers.add_batch_to_stock, uow=uow)],
-        commands.DispatchGoodsFromStock: [
-            partial(handlers.dispatch_goods_from_stock, uow=uow)
-        ],
+        commands.DispatchGoods: [partial(handlers.dispatch_goods_from_stock, uow=uow)],
         commands.UpdateBatchQuantity: [
             partial(handlers.update_batch_quantity, uow=uow)
         ],
@@ -38,7 +36,6 @@ def inject_command_handlers(uow):
 
 
 def inject_event_handlers(uow):
-    return {}
     return {
         events.BatchAddedToStock: [partial(handlers.log_batch_event, uow=uow)],
         events.DispatchedFromStock: [partial(handlers.log_stock_event, uow=uow)],

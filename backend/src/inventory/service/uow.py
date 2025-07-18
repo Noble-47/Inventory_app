@@ -1,7 +1,6 @@
 from typing import Deque
 
 from inventory.adapters import repository
-from inventory.adapters import views
 from inventory.adapters import audit
 from inventory import config
 
@@ -16,12 +15,12 @@ class UnitOfWork:
         return self
 
     def prepare(self):
+        events = []
         self.session = next(db_session())
-        self.stocks = repository.SQLStockRepository(session=self.session)
-        self.views = views.View(session=self.session)
+        self.stocks = repository.SQLStockRepository(session=self.session, events=events)
         self.stock_audit = audit.StockAudit(session=self.session)
         self.batch_audit = audit.BatchAudit(session=self.session)
-        self.events = []
+        self.events = events
 
     def __exit__(self, *args, **kwargs):
         self.rollback()

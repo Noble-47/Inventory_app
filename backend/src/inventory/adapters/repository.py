@@ -22,17 +22,19 @@ class SQLStockRepository:
     def __len__(self):
         return self.session.scalars(select(func.count()).select_from(Stock)).one()
 
-    def get_only_dispatchable_batches(self, sku: str):
+    def get_only_dispatchable_batches(self, shop_id: str, sku: str):
         batches = self.session.scalars(
             select(Batch).where(and_(Batch.sku == sku, Batch.quantity > 0))
         ).all()
-        stock = self.session.scalars(select(Stock).where(Stock.sku == sku)).one()
+        stock = self.session.scalars(
+            select(Stock).where(Stock.shop_id == shop_id, Stock.sku == sku)
+        ).one()
         stock.batches = batches
         self.seen.add(stock)
         return stock
 
-    def get(self, sku: str):
-        stmt = select(Stock).where(Stock.sku == sku)
+    def get(self, shop_id: UUID, sku: str):
+        stmt = select(Stock).where(Stock.sku == sku, Stock.shop_id == shop_id)
         stock = self.session.scalars(stmt).first()
         if stock is None:
             raise StockNotFound()
@@ -40,19 +42,19 @@ class SQLStockRepository:
         return stock
 
     def create(self, sku: str, name: str, shop_id: UUID, quantity: int, price: float):
-        timestamp = datetime_now_func().timestamp()
+        time = datetime_now_func()
         stock = Stock(sku=sku, name=name, shop_id=shop_id)
         ref = manual_batch_ref_generator()
         self.events.append(
-            events.StockCreated(sku=sku, shop_id=shop_id, name=name, level=quantity)
+            events.StockCreated(sku=sku, shop_id=shop_id, product=name, level=quantity)
         )
-        stock.add(quantity=quantity, ref=ref, price=price, timestamp=timestamp)
+        stock.add(quantity=quantity, ref=ref, price=price, time=time)
         self.session.add(stock)
         self.seen.add(stock)
         return stock
 
     def delete(self, sku: str, shop_id: UUID):
-        stock = self.get(sku)
+        stock = self.get(sku=sku, shop_id=shop_id)
         self.session.delete(stock)
         self.events.append(events.StockDeleted(sku=sku, shop_id=shop_id))
 

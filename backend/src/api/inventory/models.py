@@ -65,7 +65,11 @@ class StockAudit(BaseModel):
 class BatchAudit(BaseModel):
     """View every action taken on all batches of a stock in a shop."""
 
-    shop_id: uuid.UUID
+    shop_id: str
     sku: str
-    batch_ref: str
+    ref: str
+    quantity:int = Field(serialization_alias="available")
+    stock_time:datetime = Field(serialization_alias = "stock_date")
+    price:float
+    stock_in_units:int = Field(serialization_alias = "stock_units")
     logs: list[Log]

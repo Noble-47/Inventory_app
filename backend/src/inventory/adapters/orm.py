@@ -48,7 +48,7 @@ stock_table = Table(
     Column("sku", String(30), primary_key=True),
     Column("shop_id", ForeignKey("inventory.shop_id")),
     Column("name", String, nullable=False),
-    Column("version_number", Integer, default=0, nullable=False),
+    # Column("version_number", Integer, default=0, nullable=False),
     Column("offset", Integer, default=0),
     Column("last_sale", DateTime, nullable=True),
     UniqueConstraint("sku", "shop_id", name="shop_id_stock_sku_uix"),
@@ -77,7 +77,7 @@ stock_log_table = Table(
     Column("id", Integer, primary_key=True),
     Column("shop_id", String),
     Column("sku", String),
-    Column("action", String),
+    Column("name", String),
     Column("description", String),
     Column("event_time", DateTime),
     Column("event_hash", String, unique=True),
@@ -90,7 +90,7 @@ batch_log_table = Table(
     Column("id", Integer, primary_key=True),
     Column("shop_id", String),
     Column("sku", String),
-    Column("action", String),
+    Column("name", String),
     Column("batch_ref", String),
     Column("description", String),
     Column("event_time", DateTime),
@@ -110,7 +110,7 @@ def create_tables():
     metadata.create_all(engine)
 
 
-@contextmanager
+# @contextmanager
 def db_session():
     session = Session(engine)
     try:
@@ -132,7 +132,7 @@ def start_mappers():
                 Batch,
             ),
         },
-        version_id_col=stock_table.c.version_number,
+        # version_id_col=stock_table.c.version_number,
         # version_id_generator=False,
     )
     mapper_registry.map_imperatively(

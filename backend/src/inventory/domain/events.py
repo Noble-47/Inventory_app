@@ -28,8 +28,6 @@ class Event:
         model_dump = asdict(self)
         model_dump.pop("sku")
         model_dump.pop("shop_id")
-        # model_dump.pop("event_time")
-        # model_dump.pop("description")
         return model_dump
 
 
@@ -62,14 +60,14 @@ class BatchEvent(Event):
 
 @dataclass
 class StockCreated(StockEvent):
-    name: str
+    product: str
     sku: str
     shop_id: UUID
     level: float
 
     @property
     def description(self):
-        return f"Added new stock -{self.sku}- to -{self.shop_id}"
+        return f"Added new stock -{self.sku}"
 
 
 @dataclass
@@ -79,7 +77,7 @@ class StockDeleted(StockEvent):
 
     @property
     def description(self):
-        return f"Deleted stock -{self.sku}- from -{self.shop_id}"
+        return f"Deleted stock -{self.sku}"
 
 
 @dataclass
