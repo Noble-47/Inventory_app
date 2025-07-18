@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 
 class Unit(BaseModel):
     product: str
-    units: int
+    quantity: int
     price: float
 
 
@@ -14,9 +14,9 @@ class Sale(BaseModel):
     ref: str | None = Field(default=None)
     customer_name: str
     customer_phone: str
-    units: list[Unit]
+    vunits: list[Unit]
     date: datetime
-    sale_price: float
+    selling_price: float
     amount_paid: float
     payment_completed: bool
 
@@ -24,10 +24,25 @@ class Sale(BaseModel):
 class SaleModel(Sale):
     shop_id: UUID
 
+class SaleUpdateModel:
+    firstname:str | None = Field(default=None)
+    lastname:str | None = Field(default=None)
+    phone:str | None = Field(default=None)
+    selling_price: float | None = Field(default=None)
+    amount_paid: float | None = Field(default=None)
 
 class SaleList(BaseModel):
     shop_id: UUID
     sales: list[Sale]
+
+class SaleLog(BaseModel):
+    audit_id : int
+    shop_id:UUID
+    ref:UUID
+    description:str
+    time:float
+    payload:str
+
 
 
 # Query Models

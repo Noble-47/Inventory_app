@@ -1,5 +1,7 @@
 from fastapi import FastAPI
 
+from sales.db import create_tables
+
 
 def setup(app: FastAPI):
 
@@ -9,7 +11,7 @@ def setup(app: FastAPI):
 
     @app.on_event("startup")
     def on_startup():
-        pass
+        create_tables()
 
     @app.get("/services/sales", tags=["Services"])
     def root():

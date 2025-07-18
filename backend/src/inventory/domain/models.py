@@ -20,7 +20,7 @@ Dispatch = namedtuple("Dispatch", "quantity from_")
 
 def sku_generator(name: str):
     identifier = f"{name.strip().upper().replace(" ", "-")}"
-    return f"{identifier}"
+    return identifier
 
 
 def manual_batch_ref_generator(prefix="MANUAL"):

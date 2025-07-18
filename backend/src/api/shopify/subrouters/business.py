@@ -19,18 +19,11 @@ router = APIRouter(
 )
 
 
-# @router.get("/{business_name}/profile", response_model=models.BusinessProfile)
-# async def business_profile(business_name: str, business_id: BusinessIDDep):
-#    business_view = views.business_view(business_id)
-#    if business_view is None:
-#        raise HTTPException(status_code=404, detail="Not Found")
-#    return business_view
 
-
-@router.get("/{business_name}/settings", response_model=models.BusinessSetting)
-async def business_settings(business_id: BusinessIDDep):
-    setting_view = views.business_settings(business_id)
-    return setting_view
+#@router.get("/{business_name}/settings", response_model=models.BusinessSetting)
+#async def business_settings(business_id: BusinessIDDep):
+#    setting_view = views.business_settings(business_id)
+#    return setting_view
 
 
 @router.get("/{business_name}/invites", response_model=models.BusinessInvite)
@@ -51,20 +44,20 @@ async def business_audit_timeline(business_id: BusinessIDDep, audit_id: int):
     return unit_time_view
 
 
-@router.post("/{business_name}/settings", status_code=201)
-async def setup_business(business_id: BusinessIDDep, settings: list[models.SettingIn]):
-    errors = []
-    for setting in settings:
-        cmd = commands.UpdateSetting(
-            entity_id=business_id, name=setting.name, value=setting.value
-        )
-        try:
-            bus.handle(cmd)
-        except exceptions.InvalidSettingKey as err:
-            errors.append(setting.name)
-    if errors:
-        raise UnsupportedSettingException(values=errors)
-    return {"message": "Settings Updated"}
+#@router.post("/{business_name}/settings", status_code=201)
+#async def setup_business(business_id: BusinessIDDep, settings: list[models.SettingIn]):
+#    errors = []
+#    for setting in settings:
+#        cmd = commands.UpdateSetting(
+#            entity_id=business_id, name=setting.name, value=setting.value
+#        )
+#        try:
+#            bus.handle(cmd)
+#        except exceptions.InvalidSettingKey as err:
+#            errors.append(setting.name)
+#    if errors:
+#        raise UnsupportedSettingException(values=errors)
+#    return {"message": "Settings Updated"}
 
 
 @router.post("/{business_name}/add-shop", status_code=201)

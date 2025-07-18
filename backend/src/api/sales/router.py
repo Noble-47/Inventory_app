@@ -2,6 +2,9 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query
 
+from sales.handlers import handle
+from sales.domain import commands
+
 from api.sales import models
 from api.shared_dependencies import get_user_shop_association, ShopIDDep
 
@@ -23,19 +26,36 @@ def view_shop_sales(
 def view_sale_detail(shop_id: ShopIDDep, ref: str):
     return views.get_sale_detail(shop_id, ref)
 
+@router.get("/history", response_model=models.SaleLog)
+def view_sale_histry(shop_id: ShopIDDep):
+    return views.get_sales_history(shop_id)
+
 
 @router.post("/")
 def create_new_sale(shop_id: ShopIDDep, sale: models.SaleModel):
-    pass
+    command = commands.CreateSale(
+        shop_id=shop_id,
+        phone_number=sale.phone_number,
+        firstname=sale.firstname,
+        lastname = sale.lastname,
+        products = sale.units,
+        selling_price = sale.selling_price,
+        amount_paid = sale.amount_paid
+    )
+    handle(command)
 
 
 # can delete sale
 @router.delete("/{ref}")
 def delete_sale_record(shop_id: ShopIDDep, ref: str):
-    pass
+    command = commands.DeleteSale(shop_id=shop_id, ref=reg)
+    handle(command)
 
 
 # can update sale
 @router.patch("/{ref}")
 def update_sale_record(shop_id: ShopIDDep, sale: models.SaleModel):
-    pass
+    updates = sale.dump_model()
+    ref = updates.pop("ref")
+    command = commands.UpdateSale(shop_id=shop_id, ref=ref, updates=updates)
+    handle(command)
