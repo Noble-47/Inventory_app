@@ -19,7 +19,7 @@ Dispatch = namedtuple("Dispatch", "quantity from_")
 
 
 def sku_generator(name: str):
-    identifier = f"{name.strip().upper().replace(" ", "-")}"
+    identifier = f'{name.strip().upper().replace(" ", "-")}'
     return identifier
 
 
