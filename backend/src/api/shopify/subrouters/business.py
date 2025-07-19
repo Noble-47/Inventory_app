@@ -19,9 +19,8 @@ router = APIRouter(
 )
 
 
-
-#@router.get("/{business_name}/settings", response_model=models.BusinessSetting)
-#async def business_settings(business_id: BusinessIDDep):
+# @router.get("/{business_name}/settings", response_model=models.BusinessSetting)
+# async def business_settings(business_id: BusinessIDDep):
 #    setting_view = views.business_settings(business_id)
 #    return setting_view
 
@@ -44,8 +43,8 @@ async def business_audit_timeline(business_id: BusinessIDDep, audit_id: int):
     return unit_time_view
 
 
-#@router.post("/{business_name}/settings", status_code=201)
-#async def setup_business(business_id: BusinessIDDep, settings: list[models.SettingIn]):
+# @router.post("/{business_name}/settings", status_code=201)
+# async def setup_business(business_id: BusinessIDDep, settings: list[models.SettingIn]):
 #    errors = []
 #    for setting in settings:
 #        cmd = commands.UpdateSetting(

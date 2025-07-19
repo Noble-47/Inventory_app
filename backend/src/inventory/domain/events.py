@@ -28,6 +28,9 @@ class Event:
         model_dump = asdict(self)
         model_dump.pop("sku")
         model_dump.pop("shop_id")
+        for k, v in model_dump.items():
+            if isinstance(v, datetime):
+                model_dump[k] = v.timestamp()
         return model_dump
 
 

@@ -37,8 +37,10 @@ def inject_event_handlers(uow, notifier):
         events.AddedNewShop: [
             partial(handlers.log_audit, uow=uow),
             partial(handlers.add_shop_to_views, uow=uow),
+            partial(handlers.notify_shop_created),
         ],
         events.RemovedShop: [
+            partial(handlers.notify_shop_deleted),
             partial(handlers.log_audit, uow=uow),
             partial(handlers.remove_shop_from_views, uow=uow),
         ],
@@ -59,4 +61,5 @@ def inject_event_handlers(uow, notifier):
                 handlers.create_and_send_verification_token, notifier=notifier, uow=uow
             )
         ],
+        events.UpdatedShopSetting: [partial(handlers.notify_settings_updates)],
     }

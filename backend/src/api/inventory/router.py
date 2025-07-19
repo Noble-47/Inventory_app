@@ -46,7 +46,9 @@ async def view_stock_history(shop_id: ShopIDDep, sku):
     view = await views.get_stock_history(shop_id=shop_id, sku=sku)
     if view:
         return view
-    raise HTTPException(status_code=404, detail="Stock Log is empty or stock does not exist")
+    raise HTTPException(
+        status_code=404, detail="Stock Log is empty or stock does not exist"
+    )
 
 
 @router.get("/{sku}/batch/{batch_ref}", response_model=models.BatchAudit)
@@ -54,7 +56,9 @@ async def view_batch(shop_id: ShopIDDep, sku: str, batch_ref: str):
     view = await views.get_batch(shop_id, sku, batch_ref)
     if view:
         return view
-    raise HTTPException(status_code=404, detail="Stock or batch log is empty or does not exist")
+    raise HTTPException(
+        status_code=404, detail="Stock or batch log is empty or does not exist"
+    )
 
 
 # requires can_add_new_product permissions

@@ -9,8 +9,8 @@ class CustomersDB:
         self.session = session
 
 
-    def add(phone:str, firstname:str, lastname:str):
-        if self.check_exists(phone, session):
+    def add(self, phone:str, firstname:str, lastname:str):
+        if self.check_exists(phone):
             # No two persons have the same phone number
             return self.get(phone)
         customer = Customer(phone=phone, firstname=firstname, lastname=lastname)
@@ -37,7 +37,7 @@ class CustomersDB:
         customer = self.session.exec(stmt).first()
         return customer
 
-    def create_or_update(self, phone, firstname, lastname):
+    def get_or_create(self, phone, firstname, lastname):
         customer = self.get(phone)
         if customer is None:
             customer = self.add(phone, firstname, lastname)

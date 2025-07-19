@@ -11,13 +11,18 @@ SerializableUUID = Annotated[
     UUID, PlainSerializer(lambda uid : str(uid), return_type=str)
 ]
 
+
+SerializableDateTime = Annotated[
+    datetime, PlainSerializer(lambda d : d.timestamp(), return_type=float)
+]
+
 StringSerializedDict = Annotated[
     dict, PlainSerializer(lambda data : json.dumps(data), return_type=str)
 ]
 
 
 class Event(BaseModel):
-    event_time : datetime = Field(default_factory=datetime_now_func)
+    event_time : SerializableDateTime = Field(default_factory=datetime_now_func)
 
     @property
     def event_hash(self):
@@ -41,7 +46,7 @@ class Event(BaseModel):
     def serialize(self):
         return {
             "name": self.__class__.__name__,
-            "sale_ref" : self.sale_ref,
+            "ref" : self.sale_ref,
             "shop_id": self.shop_id,
             "event_hash": self.event_hash,
             "time": self.event_time.timestamp(),
@@ -49,15 +54,20 @@ class Event(BaseModel):
             "payload": self.payload,
         }
 
+class Unit(BaseModel):
+    sku:str = Field(validation_alias="product_sku")
+    quantity:int
+    price_at_sale:float
 
 class NewSaleAdded(Event):
     shop_id:SerializableUUID
     sale_ref:SerializableUUID
-    date:datetime
+    date:SerializableDateTime
     selling_price:float
     amount_paid:float
     customer: str
     customer_phone:str
+    products:list[Unit]
     description: str = Field(default="New sale record added")
 
 class Updates(BaseModel):

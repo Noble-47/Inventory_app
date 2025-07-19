@@ -6,6 +6,17 @@ from pydantic import BaseModel
 class Command(BaseModel):
     pass
 
+class CreateShopRecord(Command):
+    shop_id:UUID
+
+class DeleteShopRecord(Command):
+    shop_id:UUID
+
+class Record(BaseModel):
+    name:str
+    cogs:float
+    value:int
+    price:float
 
 class CreateSale(Command):
     shop_id:UUID
@@ -15,6 +26,7 @@ class CreateSale(Command):
     products:list[dict[str, Any]]
     selling_price:float
     amount_paid:float
+    inventory_record : dict[str, Record]
 
 class UpdateSale(Command):
     shop_id:UUID

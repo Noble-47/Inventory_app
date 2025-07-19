@@ -50,6 +50,10 @@ class StockView:
     def level(self):
         return sum(batch.quantity for batch in self.batches)
 
+    @property
+    def price(self):
+        return 100.00
+
     # @model_serializer
     def model_dump(self):
         return {

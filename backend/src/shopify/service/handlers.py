@@ -3,6 +3,8 @@ from shopify.config import DEFAULT_SETTINGS
 from shopify.db import events as db_events
 from shopify import exceptions
 
+from exchange import hub
+
 from shopify.service.uow import UnitOfWork
 from shopify.notification.email import EmailNotifier
 
@@ -145,7 +147,6 @@ def update_setting(command: commands.UpdateSetting, uow: UnitOfWork):
                 name=command.name,
                 value=command.value,
                 entity_id=command.entity_id,
-                entity_type="business",
             )
         except ValueError as err:
             raise exceptions.InvalidSettingKey(str(err))
@@ -235,6 +236,22 @@ def send_invitation_link(
         )
         uow.tokenizer.mark_as_sent(event.token_str)
         uow.commit()
+
+
+def notify_shop_created(event: events.AddedNewShop):
+    hub.publish("shop_notifications", "new_shop_added", {"shop_id": str(event.shop_id)})
+
+
+def notify_shop_deleted(event: events.RemovedShop):
+    hub.publish("shop_notifications", "shop_removed", {"shop_id": str(event.shop_id)})
+
+
+def notify_settings_updates(event: events.UpdatedShopSetting):
+    hub.publish(
+        "settings_notifications",
+        f"{event.tag}_setting_updates",
+        {"shop_id": event.shop_id, "name": event.name, "value": event.value},
+    )
 
 
 COMMAND_HANDLERS = {

@@ -170,7 +170,7 @@ def get_user_shop_association(
     if business_name not in user["manager_record"]:
         raise HTTPException(status_code=404, detail="Business Not Found")
 
-    if shop_location != user["manager_record"][business_name]['location']:
+    if shop_location != user["manager_record"][business_name]["location"]:
         raise HTTPException(status_code=404, detail="Shop Not Found")
 
     record["association_type"] = "shop_manager"

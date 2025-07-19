@@ -68,8 +68,8 @@ class BatchAudit(BaseModel):
     shop_id: str
     sku: str
     ref: str
-    quantity:int = Field(serialization_alias="available")
-    stock_time:datetime = Field(serialization_alias = "stock_date")
-    price:float
-    stock_in_units:int = Field(serialization_alias = "stock_units")
+    quantity: int = Field(serialization_alias="available")
+    stock_time: datetime = Field(serialization_alias="stock_date")
+    price: float
+    stock_in_units: int = Field(serialization_alias="stock_units")
     logs: list[Log]

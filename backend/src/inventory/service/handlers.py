@@ -47,7 +47,7 @@ def dispatch_goods_from_stock(command: commands.DispatchGoods, uow: UnitOfWork):
         stock = uow.stocks.get_only_dispatchable_batches(
             sku=command.sku, shop_id=command.shop_id
         )
-        stock.dispatch(quantity=command.quantity, timestamp=command.timestamp)
+        stock.dispatch(quantity=command.quantity, dispatch_time=command.timestamp)
         uow.commit()
 
 
