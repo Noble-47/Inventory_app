@@ -3,13 +3,13 @@ from sqlmodel import select
 from sales.domain.models import Customer
 from sales import exceptions
 
+
 class CustomersDB:
 
     def __init__(self, session):
         self.session = session
 
-
-    def add(self, phone:str, firstname:str, lastname:str):
+    def add(self, phone: str, firstname: str, lastname: str):
         if self.check_exists(phone):
             # No two persons have the same phone number
             return self.get(phone)
@@ -17,7 +17,9 @@ class CustomersDB:
         self.session.add(customer)
         return customer
 
-    def update(self, phone:str, firstname:str | None = None, lastname:str | None = None):
+    def update(
+        self, phone: str, firstname: str | None = None, lastname: str | None = None
+    ):
         if not self.check_exists(phone):
             return
         customer = self.get(phone, session)

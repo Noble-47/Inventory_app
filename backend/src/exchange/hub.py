@@ -5,17 +5,20 @@ import asyncio
 import json
 
 from exchange import config
+from shared import get_rotating_logger
+
+logger = get_rotating_logger("exchange", "exchange.log")
 
 
 def publish(channel, subject, payload):
     url = config.root_url + f"/{channel}/{subject}"
-    print(f"[x] [{channel}] Sending To {subject} - {payload}")
+    logger.info(f"[x] [{channel}] Sending To {subject} - {payload}")
     try:
         r = requests.post(url, json=payload, timeout=3)
     except requests.exceptions.Timeout:
-        print("The request timed out!")
+        logger.error("The request timed out!")
     except requests.exceptions.RequestException as e:
-        print(f"An error occurred: {e}")
+        logger.error(f"An error occurred: {e}")
 
 
 class Sender:
@@ -93,5 +96,5 @@ class Hub:
                 self.router.add_recipient(service, receiver.subject, receiver.handler)
 
     async def push(self, message):
-        print(f"[-] Message Added To Hub - {message.subject}")
+        logger.info(f"[-] Message Added To Hub - {message.subject}")
         await self.router.broadcast(message)

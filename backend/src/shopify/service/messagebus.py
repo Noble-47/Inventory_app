@@ -1,22 +1,16 @@
-from collections import deque
 from typing import Annotated
-import logging
+from collections import deque
 
 from shopify.domain import commands
 from shopify.domain import events
 from shopify import exceptions
 
+from shared import get_rotating_logger
 from shopify.service.uow import UnitOfWork
 
 Message = Annotated[events.Event, commands.Command]
 
-logging.basicConfig(
-    filename="newfile.log", format="[%(asctime)s] %(message)s", filemode="a"
-)
-
-logger = logging.getLogger()
-
-logger.setLevel(logging.INFO)
+logger = get_rotating_logger("shopify", "shopify.log")
 
 
 class MessageBus:

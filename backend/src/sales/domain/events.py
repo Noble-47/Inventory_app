@@ -1,4 +1,4 @@
-from  typing import Annotated
+from typing import Annotated
 from datetime import datetime
 from uuid import UUID
 import hashlib
@@ -8,21 +8,21 @@ from pydantic import BaseModel, Field, PlainSerializer
 from shared import datetime_now_func
 
 SerializableUUID = Annotated[
-    UUID, PlainSerializer(lambda uid : str(uid), return_type=str)
+    UUID, PlainSerializer(lambda uid: str(uid), return_type=str)
 ]
 
 
 SerializableDateTime = Annotated[
-    datetime, PlainSerializer(lambda d : d.timestamp(), return_type=float)
+    datetime, PlainSerializer(lambda d: d.timestamp(), return_type=float)
 ]
 
 StringSerializedDict = Annotated[
-    dict, PlainSerializer(lambda data : json.dumps(data), return_type=str)
+    dict, PlainSerializer(lambda data: json.dumps(data), return_type=str)
 ]
 
 
 class Event(BaseModel):
-    event_time : SerializableDateTime = Field(default_factory=datetime_now_func)
+    event_time: SerializableDateTime = Field(default_factory=datetime_now_func)
 
     @property
     def event_hash(self):
@@ -46,7 +46,7 @@ class Event(BaseModel):
     def serialize(self):
         return {
             "name": self.__class__.__name__,
-            "ref" : self.sale_ref,
+            "ref": self.sale_ref,
             "shop_id": self.shop_id,
             "event_hash": self.event_hash,
             "time": self.event_time.timestamp(),
@@ -54,38 +54,43 @@ class Event(BaseModel):
             "payload": self.payload,
         }
 
+
 class Unit(BaseModel):
-    sku:str = Field(validation_alias="product_sku")
-    quantity:int
-    price_at_sale:float
+    sku: str = Field(validation_alias="product_sku")
+    quantity: int
+    price_at_sale: float
+
 
 class NewSaleAdded(Event):
-    shop_id:SerializableUUID
-    sale_ref:SerializableUUID
-    date:SerializableDateTime
-    selling_price:float
-    amount_paid:float
+    shop_id: SerializableUUID
+    sale_ref: SerializableUUID
+    date: SerializableDateTime
+    selling_price: float
+    amount_paid: float
     firstname: str
     lastname: str
-    customer_phone:str
-    products:list[Unit]
+    customer_phone: str
+    products: list[Unit]
     description: str = Field(default="New sale record added")
 
+
 class Updates(BaseModel):
-    phone:str | None = Field(default=None)
-    firstname:str | None = Field(default=None)
-    lastname:str | None = Field(default=None)
-    selling_price:float | None = Field(default=None)
-    amount_paid:float | None = Field(default=None)
-    products:list[StringSerializedDict] | None = Field(default=None)
+    phone: str | None = Field(default=None)
+    firstname: str | None = Field(default=None)
+    lastname: str | None = Field(default=None)
+    selling_price: float | None = Field(default=None)
+    amount_paid: float | None = Field(default=None)
+    products: list[StringSerializedDict] | None = Field(default=None)
+
 
 class SaleRecordUpdated(Event):
-    shop_id:SerializableUUID
-    sale_ref:SerializableUUID
-    updates:Updates
+    shop_id: SerializableUUID
+    sale_ref: SerializableUUID
+    updates: Updates
     description: str = Field(default="Sale record updated")
 
+
 class SaleRecordDeleted(Event):
-    shop_id:SerializableUUID
-    sale_ref:SerializableUUID
+    shop_id: SerializableUUID
+    sale_ref: SerializableUUID
     description: str = Field(default="Sale record deleted")

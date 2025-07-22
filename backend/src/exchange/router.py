@@ -2,6 +2,9 @@ import asyncio
 
 from exchange.models import Service, Channel, Message, Recipient, Receiver, Subject
 from exchange.db import CollectionSet
+from shared import get_rotating_logger
+
+logger = get_rotating_logger("exchange", "exchange.log")
 
 
 class Router:
@@ -28,13 +31,13 @@ class Router:
 
     async def broadcast(self, message: Message):
         if not (message.subject in self.subject_list):
-            print(f"[-] Message Subject Is Not Recognized - {message.subject}")
+            logger.error(f"[-] Message Subject Is Not Recognized - {message.subject}")
             return
         subject = next(
             subject for subject in self.subjects if subject.name == message.subject
         )
         for recipient in subject.recipients:
-            print(f"[-] Routing Message to - {recipient.service}")
+            logger.info(f"[-] Routing Message to - {recipient.service}")
             receiver = Receiver(recipient=recipient, message=message)
             message.receivers.append(receiver)
             self.session.add(receiver)
@@ -43,18 +46,18 @@ class Router:
             # try:
             receiver.acknowledge()
             # except Exception as e:
-            #    print(e)
+            #    logger.error(e)
         # await asyncio.gather(
         #    *[self.safe_ack(ack) for ack in message.recievers],
         # )
-        print("[o] Updating Record")
+        logger.info("[o] Updating Record")
         self.session.commit()
 
     async def safe_ack(self, ack):
         try:
             await asyncio.to_thread(ack.acknowledge)
         except Exception as e:
-            print("[ERROR] Failed To Acknowledge Message")
+            logger.error("[ERROR] Failed To Acknowledge Message")
 
     def add_recipient(self, service: str, subject: str, handler: callable):
         if subject not in self.subject_list:
