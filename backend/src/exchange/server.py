@@ -50,7 +50,7 @@ def setup(app: FastAPI):
     def startup():
         create_tables()
 
-    # app.mount("/exchange", exchange_app)
+    #app.mount("/exchange", exchange_app)
 
 
 @exchange_app.post("/exchange/{channel}/{subject}")
