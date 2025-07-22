@@ -30,7 +30,8 @@ class SalesDB:
             sale_ref=sale.ref,
             date=sale.date,
             amount_paid=amount_paid,
-            customer=customer.fullname,
+            firstname=customer.firstname,
+            lastname=customer.lastname,
             customer_phone=customer.phone,
             selling_price=sale.selling_price,
             products = [unit.model_dump() for unit in products]
@@ -45,8 +46,9 @@ class SalesDB:
             events.SaleRecordDelete(shop_id=shop_id, sale_reg=ref)
         )
 
+
     def get(self, shop_id, ref):
-        if not self.check_record(shop_id):
+        if not self.is_deleted(shop_id):
             raise exceptions.ShopRecordNotFound()
         stmt = select(Sale).where(Sale.shop_id == shop_id, Sale.ref == ref)
         sale = self.session.exec(stmt).first()

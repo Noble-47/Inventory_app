@@ -5,6 +5,7 @@ from inventory.adapters import audit
 from inventory import config
 
 from inventory.adapters.orm import db_session
+from inventory.adapters.inventory import InventoryDB
 
 
 class UnitOfWork:
@@ -20,6 +21,7 @@ class UnitOfWork:
         self.stocks = repository.SQLStockRepository(session=self.session, events=events)
         self.stock_audit = audit.StockAudit(session=self.session)
         self.batch_audit = audit.BatchAudit(session=self.session)
+        self.inventory = InventoryDB(session=self.session, events=events)
         self.events = events
 
     def __exit__(self, *args, **kwargs):
@@ -38,6 +40,8 @@ class UnitOfWork:
         self.session.rollback()
 
     def collect_new_events(self):
+        if not hasattr(self, "events"):
+            return
         for event in self.events:
             yield event
         self.events.clear()

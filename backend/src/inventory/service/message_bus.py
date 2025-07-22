@@ -28,8 +28,6 @@ class MessageBus:
                 self.handle_command(message)
             elif isinstance(message, events.Event):
                 self.handle_events(message)
-            # elif issubclass(message, commands.Command):
-            #    raise ValueError("You passed in the class instead of an instance")
             else:
                 raise TypeError(
                     f"Message must by of type {events.Event} or {commands.Command}. Got {type(message)}"

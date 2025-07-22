@@ -65,12 +65,14 @@ class NewSaleAdded(Event):
     date:SerializableDateTime
     selling_price:float
     amount_paid:float
-    customer: str
+    firstname: str
+    lastname: str
     customer_phone:str
     products:list[Unit]
     description: str = Field(default="New sale record added")
 
 class Updates(BaseModel):
+    phone:str | None = Field(default=None)
     firstname:str | None = Field(default=None)
     lastname:str | None = Field(default=None)
     selling_price:float | None = Field(default=None)

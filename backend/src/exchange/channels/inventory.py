@@ -11,19 +11,19 @@ except Exception as e:
 
 
 def create_inventory(**kwargs):
-    print("     [INV] Creating new inventory")
+    print("[INV] Creating new inventory")
     command = commands.CreateInventory(shop_id=kwargs["shop_id"])
     bus.handle(command)
 
 
 def remove_inventory(**kwargs):
-    print("     [INV] Removing inventory record")
+    print("[INV] Removing inventory record")
     command = commands.DeleteInventory(shop_id=kwargs["shop_id"])
     bus.handle(command)
 
 
 def update_inventory_setting(**kwargs):
-    print("     [INV] Removing inventory record")
+    print("[INV] Removing inventory record")
     command = commands.UpdateSetting(
         shop_id=kwargs["shop_id"], name=kwargs["name"], value=kwargs["value"]
     )
@@ -31,7 +31,7 @@ def update_inventory_setting(**kwargs):
 
 
 def dispatch(**kwargs):
-    print("     [INV] Dispatching from inventory")
+    print("[INV] Dispatching from inventory")
     products = kwargs["products"]
     timestamp = datetime.fromtimestamp(kwargs["date"], TIMEZONE)
     for stock in products:
@@ -45,7 +45,7 @@ def dispatch(**kwargs):
 
 
 def update_quantity(**kwargs):
-    print("     [INV] Updating product quantity")
+    print("[INV] Updating product quantity")
     products = kwargs.get("products")
     if product is None:
         return

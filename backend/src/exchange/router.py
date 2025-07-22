@@ -71,6 +71,8 @@ class Router:
         recipient.handler = handler
         subject.recipients.add(recipient)
         self.session.commit()
+        if service not in self.service_list:
+            self.services.add(Service(name=service))
 
     def add_sender(self, service, channel, subject):
         service = next(

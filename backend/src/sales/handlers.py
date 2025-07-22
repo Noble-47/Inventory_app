@@ -36,9 +36,8 @@ def create_sale(cmd:commands.CreateSale, db):
 def update_sale(cmd:commands.UpdateSale, db):
     products = []
     with db:
-        sale = db.sales.get(command.ref)
-        updates = command.model_dump()
-        updates.pop("ref")
+        sale = db.sales.get(shop_id=cmd.shop_id, ref=cmd.ref)
+        updates = command.updates.model_dump()
         sale.update(**upadtes)
         db.commit()
         return

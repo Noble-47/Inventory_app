@@ -1,41 +1,65 @@
 from datetime import datetime
-from uuid import UUID
 
 from pydantic import BaseModel, Field
 
 
 class Debt(BaseModel):
-    purchase_ref: str
+    sale_ref: str
     amount_paid: float
-    amound_owed: float
-    last_paid: float
-    last_paid_date: datetime
-    date: datetime
-    paid: bool
+    selling_price: float
+    last_paid_date: datetime | None = Field(default=None)
 
 
 class Debtor(BaseModel):
-    name: str
-    phone_number: str
+    firstname: str
+    lastname: str
+    phone: str
     debts: list[Debt]
 
 
-class DebtModel(Debt):
-    name: str
-    phone_number: str
+class DebtRead(Debt):
+    firstname: str
+    lastname: str
+    phone: str
+
+
+class DebtWrite(BaseModel):
+    firstname: str
+    lastname: str
+    phone: str
+    amount_paid: float
+    selling_price: float
 
 
 class DebtorList(BaseModel):
-    shop_id: UUID
+    shop_id: str
     debtors: list[Debtor]
+
+
+class Log(BaseModel):
+    audit_id: int
+    sale_ref: str
+    firstname: str
+    lastname: str
+    phone: str
+    description: str
+    time: datetime
+    payload: str
+
+
+class DebtLog(BaseModel):
+    shop_id: str
+    logs: list[Log]
+
+class Payment(BaseModel):
+    sale_ref:str
+    amount:float
 
 
 # Query Models
 class DebtQueryParams(BaseModel):
-    purchase_ref: str | None = ""
     customer_name: str | None = ""
     customer_phone: str | None = ""
-    product: str | None = ""
     min_amount_owed: float | None = Field(default=None)
     max_amount_owed: float | None = Field(default=None)
     start_date: datetime | None = Field(default=None)

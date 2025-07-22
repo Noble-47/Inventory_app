@@ -17,8 +17,10 @@ class Event:
 
     @property
     def event_hash(self):
+        model_dump = asdict(self)
+        model_dump["time"] = self.event_time
         attrs = list(
-            str(v) for k, v in asdict(self).items() if k not in ["time", "description"]
+            str(v) for k, v in model_dump.items() if k != "description"
         )
         raw = "|".join(attrs).encode()
         return hashlib.sha256(raw).hexdigest()

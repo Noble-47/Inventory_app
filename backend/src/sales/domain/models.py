@@ -14,7 +14,7 @@ class Customer(SalesModel, table=True):
     phone:str = Field(primary_key=True)
     title:str | None  = Field(default=None)
     firstname:str
-    lastname:str = Field(default=None)
+    lastname:str
 
     @property
     def fullname(self):

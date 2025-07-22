@@ -86,7 +86,7 @@ def create_inventory(command: commands.CreateInventory, uow: UnitOfWork):
     with uow:
         uow.inventory.add(command.shop_id)
         uow.commit()
-        apply_default_settings(shop_id)
+        apply_default_settings(command.shop_id)
 
 
 def delete_inventory(command: commands.DeleteInventory, uow: UnitOfWork):
