@@ -4,6 +4,7 @@ from sales.db.customers import CustomersDB
 from sales.db.records import RecordsDB
 from sales.db.db import db_session, create_tables
 
+
 class DB:
 
     def __enter__(self):
@@ -29,7 +30,6 @@ class DB:
         for event in self.events:
             yield event
         self.events.clear()
-
 
 
 __all__ = [DB, AuditDB, SalesDB, CustomersDB, db_session, create_tables]

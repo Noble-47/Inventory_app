@@ -1,6 +1,14 @@
 from sqlmodel import select
 
-from sales.domain.models import Record, Sale, SaleAudit, Customer, SaleProductLink, Product
+from sales.domain.models import (
+    Record,
+    Sale,
+    SaleAudit,
+    Customer,
+    SaleProductLink,
+    Product,
+)
+
 
 class RecordsDB:
 
@@ -64,8 +72,7 @@ class RecordsDB:
             return
 
         return self.session.exec(
-            select(Sale)
-            .where(Sale.ref == ref, Sale.shop_id == shop_id)
+            select(Sale).where(Sale.ref == ref, Sale.shop_id == shop_id)
         ).first()
 
     def get_sale_history(self, shop_id):
@@ -75,4 +82,3 @@ class RecordsDB:
         return self.session.exec(
             select(SaleAudit).where(SaleAudit.shop_id == shop_id)
         ).all()
-

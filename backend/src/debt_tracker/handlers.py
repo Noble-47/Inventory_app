@@ -7,6 +7,9 @@ from debt_tracker.domain import events
 from debt_tracker.domain import commands
 
 from debt_tracker.domain.models import manual_ref_generator
+from shared import get_rotating_logger
+
+logger = get_rotating_logger("debt_tracker", "debt_tracker.log")
 
 
 def record_debt(cmd: commands.RecordDebt, db):
@@ -20,12 +23,12 @@ def record_debt(cmd: commands.RecordDebt, db):
             lastname=cmd.lastname,
         )
         debt = db.debts.add(
-            shop_id = cmd.shop_id,
-            debtor = debtor,
-            phone = debtor.phone,
-            amount_paid = cmd.amount_paid,
-            selling_price = cmd.selling_price,
-            sale_ref = cmd.sale_ref or manual_ref_generator(),
+            shop_id=cmd.shop_id,
+            debtor=debtor,
+            phone=debtor.phone,
+            amount_paid=cmd.amount_paid,
+            selling_price=cmd.selling_price,
+            sale_ref=cmd.sale_ref or manual_ref_generator(),
         )
         db.records.record_debt(cmd.shop_id, debt)
         db.commit()
@@ -138,8 +141,24 @@ event_handlers = {
 
 def handle(message):
     db = DB()
+    logger.info("Received message {message}")
     for handler in command_handlers.get(type(message), []):
-        handler(message, db)
+        logger.info(
+            f"Handling command: {type(message).__name__} with handler: {handler.__name__}"
+        )
+        try:
+            handler(message, db)
+        except Exception as e:
+            logger.error(f"Error : {e}")
+        else:
+            logger.info("Done")
     for event in db.collect_events():
+        logger.info(f"Handling event: {type(event).__name__}")
         for handler in event_handlers.get(type(event), []):
-            handler(event, db)
+            logger.info(f"Event handler: {handler.__name__}")
+            try:
+                handler(event, db)
+            except Exception as e:
+                logger.error("Error : {e}")
+            else:
+                logger.info("Done")

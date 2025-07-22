@@ -3,8 +3,11 @@ from typing import Union
 
 from inventory.domain import events, commands
 from inventory.service.uow import UnitOfWork
+from shared import get_rotating_logger
 
 Message = Union[events.Event, commands.Command]
+
+logger = get_rotating_logger("inventory", "inventory.log")
 
 
 class MessageBus:
@@ -34,20 +37,27 @@ class MessageBus:
                 )
 
             queue.extend(self.uow.collect_new_events())
-            print(queue)
 
     def handle_events(self, event: events.Event):
         handlers = self.event_handlers.get(type(event), list())
-        print(f"Received Event: {event!r}")
+        logger.info(f"Received Event: {event!r}")
         for handler in handlers:
-            print(f"Handling Event {event!r} with {handler!r}")
-            handler(event)
-            print("Done")
+            logger.info(f"Handling Event {event!r} with {handler!r}")
+            try:
+                handler(event)
+            except Exception as e:
+                logger.error("Error : {e}")
+            else:
+                logger.info("Done")
 
     def handle_command(self, command: commands.Command):
         handlers = self.command_handlers.get(type(command), list())
-        print(f"Received Command: {command!r}")
+        logger.info(f"Received Command: {command!r}")
         for handler in handlers:
-            print(f"Handling Command {command!r} with {handler!r}")
-            handler(command)
-            print("Done")
+            logger.info(f"Handling Command {command!r} with {handler!r}")
+            try:
+                handler(command)
+            except Exception as e:
+                logger.error(f"Error : {e}")
+            else:
+                logger.info("Done")

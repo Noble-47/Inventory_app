@@ -5,6 +5,7 @@ For Exchange Service
 Listens to: debt tracker channel
 listens for: payment_made, debt_waived
 """
+
 import json
 
 from sales.domain import commands

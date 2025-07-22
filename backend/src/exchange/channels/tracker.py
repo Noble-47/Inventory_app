@@ -26,7 +26,7 @@ def check_payment_for_deficit(**kwargs):
         amount_paid=kwargs["amount_paid"],
         firstname=kwargs["firstname"],
         lastname=kwargs["lastname"],
-        phone=kwargs["customer_phone"]
+        phone=kwargs["customer_phone"],
     )
     handle(command)
 
