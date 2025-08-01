@@ -32,8 +32,8 @@ def inject_command_handlers(uow):
         commands.UpdateBatchPrice: [partial(handlers.update_batch_price, uow=uow)],
         commands.CreateStock: [partial(handlers.create_stock, uow=uow)],
         commands.DeleteStock: [partial(handlers.delete_stock, uow=uow)],
-        commands.CreateInventory : [partial(handlers.create_inventory, uow=uow)],
-        commands.DeleteInventory : [partial(handlers.delete_inventory, uow=uow)]
+        commands.CreateInventory: [partial(handlers.create_inventory, uow=uow)],
+        commands.DeleteInventory: [partial(handlers.delete_inventory, uow=uow)],
     }
 
 

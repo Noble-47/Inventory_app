@@ -1,5 +1,6 @@
 from datetime import datetime
-from shared import TIMEZONE
+
+from shared import TIMEZONE, load_payload
 
 from inventory.bootstrap import bootstrap
 from inventory.domain import commands
@@ -59,7 +60,23 @@ def update_quantity(**kwargs):
     bus.handle(command)
 
 
+def add_to_inventory(**kwargs):
+    print("[INV] Updating product quantity")
+    payload = load_payload(kwargs["payload"])
+    for line in payload["orderline"]:
+        cmd = commands.AddBatchToStock(
+            shop_id=kwargs["shop_id"],
+            sku=line["sku"],
+            batch_ref=line["batch_ref"],
+            quantity=line["delivered_quantity"],
+            price=line["cost"],
+            timestamp=datetime.fromtimestamp(payload["delivery_date"], TIMEZONE),
+        )
+        bus.handle(cmd)
+
+
 def initialize_hub(hub):
+    print("[x] Initializing inventory exchange....", end="")
     exchange = hub.create_exchange("inventory")
 
     exchange.listen_on(subject="new_shop_added", handler=create_inventory)
@@ -73,3 +90,7 @@ def initialize_hub(hub):
     exchange.listen_on(subject="new_sale", handler=dispatch)
 
     exchange.listen_on(subject="sale_update", handler=update_quantity)
+
+    exchange.listen_on(subject="new_deliveries", handler=add_to_inventory)
+
+    print("Done.")

@@ -44,6 +44,7 @@ def delete_record(**kwargs):
 
 
 def initialize_hub(hub):
+    print("[x] Initializing sales exchange...", end="")
     exchange = hub.create_exchange("sales")
 
     exchange.establish_channel(
@@ -61,3 +62,4 @@ def initialize_hub(hub):
     exchange.listen_on(subject="payment_received", handler=update_amount_paid)
 
     exchange.listen_on(subject="debt_waived", handler=effect_debt_waived)
+    print("Done...")

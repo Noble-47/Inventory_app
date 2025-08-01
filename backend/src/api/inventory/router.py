@@ -61,16 +61,20 @@ async def view_batch(shop_id: ShopIDDep, sku: str, batch_ref: str):
     )
 
 
-# requires can_add_new_product permissions
 @router.post("/add")
-# @requires_permission("can_add_new_product")
 def add_stock(shop_id: ShopIDDep, stock: models.CreateStock):
     """
     Creates a new product in inventory.
     Requires `can_add_new_product` permission
     """
     command = commands.CreateStock(
-        shop_id=shop_id, name=stock.name, quantity=stock.quantity, price=stock.price
+        shop_id=shop_id,
+        name=stock.name,
+        quantity=stock.quantity,
+        price=stock.price,
+        brand=stock.brand,
+        packet_size=stock.packet_size,
+        packet_type=stock.packet_type,
     )
     try:
         bus.handle(command)

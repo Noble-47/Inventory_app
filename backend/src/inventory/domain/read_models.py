@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field, model_serializer, ConfigDict
 # from pydantic.dataclasses import dataclass
 
 from inventory.domain import stock_control
+from inventory.domain.models import Product
 
 
 class Batch(BaseModel):
@@ -25,7 +26,7 @@ class Batch(BaseModel):
 class StockView:
     shop_id: uuid.UUID
     sku: str
-    name: str
+    product: Product
     last_sale: datetime
     batches: list[Batch]
     id: int | None = None  # Field(default=None)
@@ -59,7 +60,8 @@ class StockView:
         return {
             "shop_id": self.shop_id,
             "sku": self.sku,
-            "name": self.name,
+            "name": self.product.name,
+            "brand": self.product.brand,
             "last_sale": self.last_sale,
             "batches": [Batch(**batch.__dict__).model_dump() for batch in self.batches],
             "cogs": self.cogs,

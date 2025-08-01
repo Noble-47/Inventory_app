@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from exchange.channels import inventory
 from exchange.channels import tracker
 from exchange.channels import shopify
+from exchange.channels import orders
 from exchange.channels import sales
 
 from exchange.hub import Hub
@@ -38,6 +39,7 @@ def create_hub(session):
     inventory.initialize_hub(hub)
     tracker.initialize_hub(hub)
     shopify.initialize_hub(hub)
+    orders.initialize_hub(hub)
     sales.initialize_hub(hub)
 
     hub.begin()

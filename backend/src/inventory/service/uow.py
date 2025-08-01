@@ -1,6 +1,7 @@
 from typing import Deque
 
 from inventory.adapters import repository
+from inventory.adapters import products
 from inventory.adapters import audit
 from inventory import config
 
@@ -22,6 +23,7 @@ class UnitOfWork:
         self.stock_audit = audit.StockAudit(session=self.session)
         self.batch_audit = audit.BatchAudit(session=self.session)
         self.inventory = InventoryDB(session=self.session, events=events)
+        self.products = products.Product(session=self.session)
         self.events = events
 
     def __exit__(self, *args, **kwargs):

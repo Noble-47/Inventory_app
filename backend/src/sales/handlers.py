@@ -8,7 +8,6 @@ from sales.db import DB
 
 logger = get_rotating_logger("sales", "sales.log")
 
-
 def create_record(cmd: commands.CreateShopRecord, db):
     with db:
         db.records.create(shop_id)
@@ -95,8 +94,9 @@ def handle(command):
             handler(command, db)
         except Exception as e:
             logger.error("Error {handler.__name__} : {e}")
+            raise e
         else:
-            logger, info("done")
+            logger.info("done")
     # add event listners here if necessary
     for event in db.collect_events():
         logger.info(f"Received event {event}")

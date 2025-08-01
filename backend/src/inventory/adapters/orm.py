@@ -20,12 +20,23 @@ from inventory.settings import get_control_strategy
 from inventory.config import get_database_url
 
 from inventory.adapters.audit import StockLog, BatchLog
-from inventory.domain.models import Stock, Batch, Inventory
+from inventory.domain.models import Stock, Batch, Inventory, Product
 from inventory.domain.read_models import StockView, InventoryView
 
 
 mapper_registry = registry()
 metadata = mapper_registry.metadata
+
+
+product_table = Table(
+    "products",
+    metadata,
+    Column("sku", String(30), primary_key=True),
+    Column("name", String, nullable=False),
+    Column("brand", String),
+    Column("packet_size", String),
+    Column("packet_type", String),
+)
 
 batch_table = Table(
     "batch",
@@ -45,10 +56,9 @@ batch_table = Table(
 stock_table = Table(
     "stock",
     metadata,
-    Column("sku", String(30), primary_key=True),
+    Column("id", Integer, primary_key=True),
+    Column("sku", String(30), ForeignKey("products.sku")),
     Column("shop_id", ForeignKey("inventory.shop_id")),
-    Column("name", String, nullable=False),
-    # Column("version_number", Integer, default=0, nullable=False),
     Column("offset", Integer, default=0),
     Column("last_sale", DateTime, nullable=True),
     UniqueConstraint("sku", "shop_id", name="shop_id_stock_sku_uix"),
@@ -120,6 +130,7 @@ def db_session():
 
 
 def start_mappers():
+    mapper_registry.map_imperatively(Product, product_table)
     mapper_registry.map_imperatively(BatchLog, batch_log_table)
     mapper_registry.map_imperatively(StockLog, stock_log_table)
     mapper_registry.map_imperatively(Batch, batch_table)
@@ -128,12 +139,9 @@ def start_mappers():
         Stock,
         stock_table,
         properties={
-            "batches": relationship(
-                Batch,
-            ),
+            "batches": relationship(Batch),
+            "product": relationship(Product, viewonly=True),
         },
-        # version_id_col=stock_table.c.version_number,
-        # version_id_generator=False,
     )
     mapper_registry.map_imperatively(
         InventoryView,
@@ -152,8 +160,14 @@ def start_mappers():
         properties={
             "batches": relationship(
                 Batch,
-                primaryjoin="and_(Batch.sku == StockView.sku)",
+                primaryjoin="and_(Batch.sku == StockView.sku, Batch.shop_id == StockView.shop_id)",
                 order_by=Batch.stock_time,
+                viewonly=True,
+                lazy="selectin",
+            ),
+            "product": relationship(
+                Product,
+                primaryjoin="and_(Product.sku == StockView.sku)",
                 viewonly=True,
                 lazy="selectin",
             ),

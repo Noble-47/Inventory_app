@@ -1,7 +1,10 @@
 from datetime import datetime
 from uuid import UUID
+from typing import Any
 
 from pydantic import BaseModel, Field
+
+from stock_port.domain.commands import OrderedProducts, Delivery
 
 
 class CancelOrder(BaseModel):
@@ -9,24 +12,55 @@ class CancelOrder(BaseModel):
     reason: str | None = Field(default=None)
 
 
-class OrderLine(BaseModel):
-    name: str
-    expected_quantity: int
-    cost: float
-
-
-class Order(BaseModel):
-    shop_id: UUID
-    supplier: str
+class CreateOrder(BaseModel):
+    supplier_firstname: str
+    supplier_lastname: str
     supplier_phone: str
-    orderline: list[OrderLine]
+    orderline: list[OrderedProducts]
     expected_delivery_date: datetime
 
 
-class OrderSlim(BaseModel):
+class OrderLine(BaseModel):
+    sku: str
+    expected_quantity: int
+    delivered_quantity: int | None = Field(default=None)
+    cost: float
+    delivery_date: datetime | None = Field(default=None)
+
+
+class Order(BaseModel):
+    supplier_firstname: str
+    supplier_lastname: str
+    supplier_phone: str
+    orderline: list[OrderLine]
+    expected_delivery_date: datetime
+    delivery_date: datetime | None = Field(default=None)
+    status: str
+    cost: float
+
+
+class ProcessDelivery(BaseModel):
     order_id: UUID
+    orderline: dict[str, dict[str, Any]] = Field(
+        description="Use this to pass in the quantity delivered as well as other info like 'cost' if need. the key must be the product sku and the value a dictionary with keywords `quantity`, `cost` and their respective values"
+    )
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "order_id": "",
+                    "orderline": {"product-sku": {"quantity": 12, "cost": ""}},
+                }
+            ]
+        }
+    }
+
+
+class OrderSlim(BaseModel):
+    order_id: UUID = Field(validation_alias="id")
     supplier: str
-    supplies_phone: str
+    supplier_phone: str
     status: str
     expected_delivery_date: datetime
 
@@ -37,8 +71,10 @@ class ShopOrders(BaseModel):
 
 
 class SupplierSlim(BaseModel):
-    name: str
-    phone_number: str
+    id: int
+    firstname: str
+    lastname: str
+    phone: str
 
 
 class Supplier(SupplierSlim):
@@ -46,5 +82,18 @@ class Supplier(SupplierSlim):
 
 
 class ShopSuppliers(BaseModel):
-    shop_id: str
+    shop_id: UUID
     suppliers: list[SupplierSlim]
+
+
+class Log(BaseModel):
+    audit_id: int = Field(validation_alias="id")
+    order_id: UUID = Field()
+    description: str
+    time: datetime
+    payload: dict[str, Any]
+
+
+class ShopHistory(BaseModel):
+    shop_id: UUID
+    logs: list[Log]

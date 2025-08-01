@@ -49,7 +49,7 @@ class Event(BaseModel):
         data["time"] = data["time"].timestamp()
         for key, value in data["payload"].items():
             if isinstance(value, datetime):
-                data[key] = value.timestamp()
+                data["payload"][key] = value.timestamp()
         data["payload"] = json.dumps(data["payload"])
         return data
 
