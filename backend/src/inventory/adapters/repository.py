@@ -24,7 +24,9 @@ class SQLStockRepository:
 
     def get_only_dispatchable_batches(self, shop_id: str, sku: str):
         batches = self.session.scalars(
-            select(Batch).where(and_(Batch.sku == sku, Batch.quantity > 0))
+            select(Batch).where(
+                and_(Batch.sku == sku, Batch.quantity > 0, Batch.shop_id == shop_id)
+            )
         ).all()
         stock = self.session.scalars(
             select(Stock).where(Stock.shop_id == shop_id, Stock.sku == sku)
@@ -36,17 +38,19 @@ class SQLStockRepository:
     def get(self, shop_id: UUID, sku: str):
         stmt = select(Stock).where(Stock.sku == sku, Stock.shop_id == shop_id)
         stock = self.session.scalars(stmt).first()
-        if stock is None:
-            raise StockNotFound()
-        self.seen.add(stock)
+        if stock:
+            #    raise StockNotFound()
+            self.seen.add(stock)
         return stock
 
-    def create(self, sku: str, name: str, shop_id: UUID, quantity: int, price: float):
+    def create(self, product, shop_id: UUID, quantity: int, price: float):
         time = datetime_now_func()
-        stock = Stock(sku=sku, name=name, shop_id=shop_id)
+        stock = Stock(sku=product.sku, product=product, shop_id=shop_id)
         ref = manual_batch_ref_generator()
         self.events.append(
-            events.StockCreated(sku=sku, shop_id=shop_id, product=name, level=quantity)
+            events.StockCreated(
+                sku=stock.sku, shop_id=shop_id, product=product.name, level=quantity
+            )
         )
         stock.add(quantity=quantity, ref=ref, price=price, time=time)
         self.session.add(stock)

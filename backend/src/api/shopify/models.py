@@ -11,7 +11,6 @@ class Account(BaseModel):
     firstname: str
     lastname: str
     email: EmailStr
-    account_type: str | None = Field(default=None)
 
 
 class AccountCreate(Account):

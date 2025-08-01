@@ -75,6 +75,7 @@ def update_handler(**kwargs):
 
 
 def initialize_hub(hub):
+    print("[x] Initializing tracker exchange", end="")
     exchange = hub.create_exchange("tracker")
 
     exchange.establish_channel(
@@ -99,3 +100,4 @@ def initialize_hub(hub):
     # exchange.listen_on(
     #    subject="tracker_setting_update", handler=update_inventory_setting
     # )
+    print("...Done.")

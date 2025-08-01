@@ -8,6 +8,10 @@ import json
 from shared import datetime_now_func
 
 
+def do_nothing(*args, **kwargs):
+    pass
+
+
 @dataclass
 class Service:
     name: str
@@ -20,9 +24,7 @@ class Service:
 class Recipient:
     subject: str
     service: str
-    handler: Callable[Any, None] = field(
-        default=lambda x: print(x)
-    )  # Do nothing fallback
+    handler: Callable[Any, None] = field(default=do_nothing)  # Do nothing fallback
 
     def __hash__(self):
         return hash((self.service, self.subject))

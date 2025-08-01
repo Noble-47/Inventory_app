@@ -5,10 +5,12 @@ from pathlib import Path
 import logging
 import pytz
 import os
+import json
 
 TIMEZONE = pytz.timezone("Africa/Lagos")
 
 datetime_now_func = partial(datetime.now, tz=pytz.timezone("Africa/Lagos"))
+
 LOG_DIR = Path(__file__).parent.parent / "log"
 
 def get_rotating_logger(logger_name: str, log_filename: str) -> logging.Logger:
@@ -32,3 +34,10 @@ def get_rotating_logger(logger_name: str, log_filename: str) -> logging.Logger:
         console_handler.setFormatter(formatter)
         logger.addHandler(console_handler)
     return logger
+
+
+def load_payload(payload):
+    payload = json.loads(payload)
+    if "time" in payload:
+        payload["time"] = datetime.fromtimestamp(payload["time"])
+    return payload

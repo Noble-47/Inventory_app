@@ -29,6 +29,9 @@ class CreateStock(Command):
 
     shop_id: StrUUID
     name: str
+    brand: str
+    packet_type: str
+    packet_size: str
     time: datetime = Field(default_factory=datetime_now_func)
     price: float
     quantity: int
@@ -40,7 +43,7 @@ class AddBatchToStock(Command):
     batch_ref: str
     quantity: int
     price: float
-    timestamp: float
+    timestamp: datetime
 
 
 class DispatchGoods(Command):

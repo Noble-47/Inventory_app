@@ -1,5 +1,7 @@
 from fastapi import FastAPI
 
+from stock_port.db import db
+
 
 def setup(app: FastAPI):
 
@@ -10,7 +12,7 @@ def setup(app: FastAPI):
     @app.on_event("startup")
     def on_startup():
         # create db tables
-        pass
+        db.create_tables()
 
     @app.get("/services/orders", tags=["Services"])
     def root():
