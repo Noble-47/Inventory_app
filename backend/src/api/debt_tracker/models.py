@@ -51,9 +51,10 @@ class DebtLog(BaseModel):
     shop_id: str
     logs: list[Log]
 
+
 class Payment(BaseModel):
-    sale_ref:str
-    amount:float
+    sale_ref: str
+    amount: float
 
 
 # Query Models

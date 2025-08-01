@@ -26,7 +26,7 @@ def check_payment_for_deficit(**kwargs):
         amount_paid=kwargs["amount_paid"],
         firstname=kwargs["firstname"],
         lastname=kwargs["lastname"],
-        phone=kwargs["customer_phone"]
+        phone=kwargs["customer_phone"],
     )
     handle(command)
 
@@ -75,6 +75,7 @@ def update_handler(**kwargs):
 
 
 def initialize_hub(hub):
+    print("[x] Initializing tracker exchange", end="")
     exchange = hub.create_exchange("tracker")
 
     exchange.establish_channel(
@@ -99,3 +100,4 @@ def initialize_hub(hub):
     # exchange.listen_on(
     #    subject="tracker_setting_update", handler=update_inventory_setting
     # )
+    print("...Done.")

@@ -12,16 +12,25 @@ class SalesDB:
         self.events = events
 
     def is_deleted(self, shop_id):
-        return self.session.exec(
-            select(Record.deleted).where(Record.shop_id == shop_id)
-        ).first() or False # if None
+        return (
+            self.session.exec(
+                select(Record.deleted).where(Record.shop_id == shop_id)
+            ).first()
+            or False
+        )  # if None
 
     def add(self, shop_id, products, customer, selling_price, amount_paid):
         if self.is_deleted(shop_id):
             raise exceptions.ShopRecordNotFound()
 
         products = [SaleProductLink(**product) for product in products]
-        sale = Sale(shop_id=shop_id, customer=customer, selling_price=selling_price, products=products, amount_paid=amount_paid)
+        sale = Sale(
+            shop_id=shop_id,
+            customer=customer,
+            selling_price=selling_price,
+            products=products,
+            amount_paid=amount_paid,
+        )
         print()
         print(sale)
         print()
@@ -34,7 +43,7 @@ class SalesDB:
             lastname=customer.lastname,
             customer_phone=customer.phone,
             selling_price=sale.selling_price,
-            products = [unit.model_dump() for unit in products]
+            products=[unit.model_dump() for unit in products],
         )
         self.session.add(sale)
         self.events.append(event)
@@ -42,10 +51,7 @@ class SalesDB:
     def delete(self, shop_id, ref):
         sale = get(shop_id, ref)
         self.session.delete(sale)
-        self.events.append(
-            events.SaleRecordDelete(shop_id=shop_id, sale_reg=ref)
-        )
-
+        self.events.append(events.SaleRecordDelete(shop_id=shop_id, sale_reg=ref))
 
     def get(self, shop_id, ref):
         if not self.is_deleted(shop_id):

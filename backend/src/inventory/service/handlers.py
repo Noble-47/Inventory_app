@@ -9,14 +9,18 @@ from inventory.settings import SQLSettingPersistor, apply_default_settings
 # command handlers
 def create_stock(command: commands.CreateStock, uow: UnitOfWork):
     with uow:
-        sku = sku_generator(name=command.name)
-        if uow.stocks.check_exists(sku, command.shop_id):
+        product = uow.products.get_or_create(
+            name=command.name,
+            brand=command.brand,
+            packet_type=command.packet_type,
+            packet_size=command.packet_size,
+        )
+        if uow.stocks.check_exists(product.sku, command.shop_id):
             raise exceptions.DuplicateStockRecord(
                 f"Duplicate record of {command.name} with sku {sku}"
             )
         stock = uow.stocks.create(
-            sku=sku,
-            name=command.name,
+            product=product,
             shop_id=command.shop_id,
             quantity=command.quantity,
             price=command.price,
@@ -33,11 +37,20 @@ def delete_stock(command: commands.DeleteStock, uow: UnitOfWork):
 def add_batch_to_stock(command: commands.AddBatchToStock, uow: UnitOfWork):
     with uow:
         stock = uow.stocks.get(sku=command.sku, shop_id=command.shop_id)
+        if stock is None:
+            # check if sku exists
+            product = uow.products.get(sku=command.sku)
+            stock = uow.stocks.create(
+                product=product,
+                shop_id=command.shop_id,
+                quantity=0,
+                price=0.0,
+            )
         stock.add(
             ref=command.batch_ref,
             quantity=command.quantity,
             price=command.price,
-            timestamp=command.timestamp,
+            time=command.timestamp,
         )
         uow.commit()
 

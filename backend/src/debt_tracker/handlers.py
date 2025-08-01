@@ -20,12 +20,12 @@ def record_debt(cmd: commands.RecordDebt, db):
             lastname=cmd.lastname,
         )
         debt = db.debts.add(
-            shop_id = cmd.shop_id,
-            debtor = debtor,
-            phone = debtor.phone,
-            amount_paid = cmd.amount_paid,
-            selling_price = cmd.selling_price,
-            sale_ref = cmd.sale_ref or manual_ref_generator(),
+            shop_id=cmd.shop_id,
+            debtor=debtor,
+            phone=debtor.phone,
+            amount_paid=cmd.amount_paid,
+            selling_price=cmd.selling_price,
+            sale_ref=cmd.sale_ref or manual_ref_generator(),
         )
         db.records.record_debt(cmd.shop_id, debt)
         db.commit()

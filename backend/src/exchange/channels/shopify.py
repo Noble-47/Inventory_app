@@ -1,5 +1,5 @@
 def initialize_hub(hub):
-    # exchange = hub.create_exchange("shopify")
+    print("[x] Initializing shopify exchange...", end="")
     exchange = hub.create_exchange("shopify")
 
     exchange.establish_channel(
@@ -15,3 +15,4 @@ def initialize_hub(hub):
             "order_setting_updates",
         ],
     )
+    print("Done")

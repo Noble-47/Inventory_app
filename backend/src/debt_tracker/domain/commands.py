@@ -7,7 +7,7 @@ class Command(BaseModel):
 
 class RecordPayment(Command):
     sale_ref: str
-    shop_id:str
+    shop_id: str
     amount: float
 
 
@@ -31,7 +31,7 @@ class RecordDebt(Command):
     lastname: str
     amount_paid: float
     selling_price: float
-    sale_ref:str | None = Field(default=None)
+    sale_ref: str | None = Field(default=None)
 
 
 class UpdateDebtorInfo(Command):

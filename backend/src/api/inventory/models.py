@@ -9,6 +9,9 @@ class CreateStock(BaseModel):
     """Add a new stock to shop."""
 
     name: str
+    brand: str
+    packet_type: str
+    packet_size: str
     quantity: int = Field(default=0)
     price: float
 
@@ -19,6 +22,7 @@ class Stock(BaseModel):
 
     sku: str
     name: str
+    brand: str
     level: int
     last_sale: datetime | None = Field(default=None)
 

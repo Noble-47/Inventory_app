@@ -55,12 +55,13 @@ def create_debt(shop_id: ShopIDDep, debt: models.DebtWrite):
     else:
         return {"message": "Entry is being processed"}
 
+
 @router.post("/debt_tracker/make-payment/")
-def make_payment(shop_id: ShopIDDep, payment:models.Payment):
+def make_payment(shop_id: ShopIDDep, payment: models.Payment):
     cmd = commands.RecordPayment(**payment.model_dump(), shop_id=shop_id)
-    #try:
+    # try:
     handle(cmd)
-    #except:
+    # except:
     #    pass
-    #else:
+    # else:
     #    return {"message" : "Payment recorded"}

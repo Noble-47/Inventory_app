@@ -4,9 +4,17 @@ from sqlmodel import Session, SQLModel, create_engine
 from sqlalchemy.orm import sessionmaker
 
 from sales import config
-from sales.domain.models import SalesModel, Sale, Product, SaleProductLink, Customer, SaleAudit
+from sales.domain.models import (
+    SalesModel,
+    Sale,
+    Product,
+    SaleProductLink,
+    Customer,
+    SaleAudit,
+)
 
 engine = create_engine(config.DATABASE_URL)
+
 
 def create_tables():
     SalesModel.metadata.create_all(engine)
@@ -18,4 +26,3 @@ def db_session():
         yield session
     finally:
         session.close()
-

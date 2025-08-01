@@ -18,12 +18,16 @@ from inventory.config import TIMEZONE as timezone
 Dispatch = namedtuple("Dispatch", "quantity from_")
 
 
-def sku_generator(name: str):
-    identifier = f'{name.strip().upper().replace(" ", "-")}'
+def sku_generator(name: str, brand: str, packet_size, packet_type):
+    brand = brand.title().strip().replace(" ", "-")
+    name = name.title().strip().replace(" ", "-")
+    packet_type = packet_type.strip().replace(" ", "")
+    packet_size = packet_size.strip().replace(" ", "")
+    identifier = f"{brand}-{name}-{packet_type}-{packet_size}"
     return identifier
 
 
-def manual_batch_ref_generator(prefix="MANUAL"):
+def manual_batch_ref_generator(prefix="MANUAL-ENTRY"):
     return f"{prefix}-{datetime_now_func().strftime('%Y%m%d-%H%M%S')}"
 
 
@@ -63,14 +67,31 @@ class Batch:
 
 
 @dataclass
+class Product:
+    sku: str
+    name: str
+    brand: str
+    packet_size: str
+    packet_type: str
+
+
+@dataclass
 class Stock:
     shop_id: str
     sku: str
-    name: str
+    product: Product
     batches: list[Batch] = field(default_factory=list)
     control_strategy: InitVar[str, None] = None
     last_sale: datetime = None
     events: ClassVar[list] = []
+
+    @property
+    def name(self):
+        return self.product.name
+
+    @property
+    def brand(self):
+        return self.product.brand
 
     def __len__(self):
         return len(self.batches)
@@ -100,10 +121,7 @@ class Stock:
     def set_control_strategy(self, control_strategy: str):
         self.controller = stock_control.get_controller(self, control_strategy)
 
-    def add(
-        self, ref: str, quantity: float, price: float, time: datetime
-    ):  # timestamp: float):
-        # time = datetime.fromtimestamp(timestamp, tz=timezone)
+    def add(self, ref: str, quantity: float, price: float, time: datetime):
         new_batch = Batch(self.sku, ref, quantity, price, time)
         self.batches.append(new_batch)
         self.events.append(
