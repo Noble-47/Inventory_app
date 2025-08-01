@@ -1,6 +1,6 @@
 import uuid
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class Command(BaseModel, frozen=True):
@@ -43,7 +43,7 @@ class CreateAssignmentToken(Command):
     business_id: uuid.UUID
     shop_id: uuid.UUID
     email: str
-    permissions: str | dict[str, list[str]]
+    permissions: str | dict[str, list[str]] = Field(default="*")
 
 
 class CreateManager(CreateAccount):

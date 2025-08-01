@@ -39,7 +39,9 @@ DEFAULT_SETTINGS = [
     },
 ]
 
-MANAGER_INVITE_FORM_URL = "https://frontend_invite_form.com"
+FRONTEND_ROOT_URL = os.environ.get("FRONTEND_HOST", "http://localhost.com:4200")
+SERVER_ROOT_URL = os.environ.get("FRONTEND_HOST", "http://localhost.com:8000")
+
 EMAIL_PROVIDER_KEY = os.environ.get("EMAIL_PROVIDER_KEY")
 ADMIN_EMAIL = "inventra@email.com"
 ADMIN_NAME = "Inventra"

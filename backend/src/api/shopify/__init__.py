@@ -4,7 +4,6 @@ from fastapi.responses import JSONResponse
 
 from shopify.bootstrap import bootstrap
 from shopify.domain import commands
-from shopify import permissions
 from shopify import exceptions
 from shopify import config
 from shopify import db
@@ -90,10 +89,3 @@ def setup(app: FastAPI):
             )
         return {"message": "Invitation confirmed, Kindly check your email to proceed"}
 
-    @app.get(
-        "/managers/permissions/all",
-        response_model=ManagerPermissions,
-        tags=["Manage Managers"],
-    )
-    async def get_all_permissions():
-        return permissions.ALL_PERMISSIONS

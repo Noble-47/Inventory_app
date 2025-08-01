@@ -84,3 +84,11 @@ class Registry(db.BaseRepo):
         if shop_registry and shop_registry.manager is not None:
             return shop_registry.manager.fullname
         return None
+
+    def get_managers(self, business_id:uuid.UUID):
+        shop_with_managers = self.session.exec(
+            select(models.ShopRegistry, models.ManagerRegistry.assigned)
+            .join(models.ManagerRegistry)
+            .where(models.ShopRegistry.manager_id != None)
+        ).all()
+        return shop_with_managers

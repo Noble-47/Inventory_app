@@ -54,7 +54,6 @@ async def create_manager_invite_link(
         business_id=business_id,
         shop_id=shop_id,
         email=token_params.email,
-        permissions=token_params.permissions,
     )
     bus.handle(cmd)
     return {

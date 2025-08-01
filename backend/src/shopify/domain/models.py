@@ -58,7 +58,7 @@ class ManagerRegistry(SQLModel, table=True):
     business_id: uuid.UUID = Field(foreign_key="business.id")
     manager_id: int = Field(foreign_key="account.id")
     is_active: bool = True
-    permissions: str | None = Field(default=None)
+    permissions: str | None = Field(default="*")
     assigned: datetime | None
 
     account: Account = Relationship(

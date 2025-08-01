@@ -174,6 +174,24 @@ def business_timeline(business_id: uuid.UUID):
     return view
 
 
+def get_business_managers(business_id:uuid.UUID):
+    session = next(db.db_session())
+    registry_db = db.Registry(session)
+    shop_with_managers = registry_db.get_managers(business_id)
+    view = []
+    for shop, assigned in shop_with_managers:
+        view.append({
+            "shop_id" : shop.shop_id,
+            "shop_location" : shop.location,
+            "manager_id" : shop.manager_id,
+            "firstname" : shop.manager.firstname,
+            "lastname" : shop.manager.lastname,
+            "email" : shop.manager.email,
+            "assigned" : assigned
+        })
+    return view
+
+
 def audit_unit(business_id: uuid.UUID, audit_id):
     session = next(db.db_session())
     audit_db = db.Audit(session)

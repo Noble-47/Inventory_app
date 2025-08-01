@@ -4,8 +4,6 @@ from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
 
-from shopify import permissions
-
 
 class Account(BaseModel):
     firstname: str
@@ -34,7 +32,6 @@ class ManagedShopDetail(BaseModel):
     id: UUID
     location: str
     business: str
-    permissions: dict[str, list]
     assigned: datetime
 
 
@@ -112,13 +109,11 @@ class Manager(BaseModel):
     manager_id: int
     firstname: str
     lastname: str
-    permissions: ManagerPermissions
     assigned: datetime
 
 
 class CreateInviteToken(BaseModel):
     email: str
-    permissions: Union[ManagerPermissions, Literal["*"]]
 
 
 class Invite(BaseModel):
