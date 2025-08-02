@@ -53,7 +53,7 @@ def create_debt(shop_id: ShopIDDep, debt: models.DebtWrite):
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
     else:
-        return {"message": "Entry is being processed"}
+        return {"message": "Entry received"}
 
 
 @router.post("/debt_tracker/make-payment/")

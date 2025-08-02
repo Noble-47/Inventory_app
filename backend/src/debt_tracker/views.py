@@ -4,7 +4,7 @@ from debt_tracker.domain.models import Debt, Debtor, DebtLog
 
 def get_debtors(shop_id):
     with DB() as db:
-        debtors = db.records.get_debtors(shop_id)
+        debtors = db.records.get_debtors(shop_id) or []
         view = {"shop_id": shop_id}
         view["debtors"] = [
             {
@@ -20,19 +20,20 @@ def get_debtors(shop_id):
 
 def get_debts(shop_id, query=None):
     with DB() as db:
-        debts = db.records.fetch_debts(shop_id, query)
-        return [
-            {
-                "firstname": debt.debtor.firstname,
-                "lastname": debt.debtor.lastname,
-                "phone": debt.debtor.phone,
-                "sale_ref": debt.sale_ref,
-                "amount_paid": debt.amount_paid,
-                "selling_price": debt.selling_price,
-                "last_paid_date": debt.last_paid_date,
-            }
-            for debt in debts
-        ]
+        debts = db.records.fetch_debts(shop_id)
+        if debts:
+            return [
+                {
+                    "firstname": debt.debtor.firstname,
+                    "lastname": debt.debtor.lastname,
+                    "phone": debt.debtor.phone,
+                    "sale_ref": debt.sale_ref,
+                    "amount_paid": debt.amount_paid,
+                    "selling_price": debt.selling_price,
+                    "last_paid_date": debt.last_paid_date,
+                }
+                for debt in debts
+            ]
 
 
 def get_debt(shop_id, sale_ref):

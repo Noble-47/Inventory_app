@@ -42,24 +42,15 @@ class RecordsDB:
         ).first()
 
     def is_deleted(self, shop_id):
-        return bool(self.get(shop_id))
+        return not bool(self.get(shop_id))
 
-    def fetch_debts(self, shop_id, query):
-        stmt = select(Debt).join(Debtor, isouter=True)
-
-        if query.firstname:
-            stmt = stmt.where(Debtor.firstname.ilike(query.firstname))
-        if query.lastname:
-            stmt = stmt.where(Debtor.lastname.ilike(query.lastname))
-        if query.phone_number:
-            stmt = stmt.where(Debtor.phone == query.phone_number)
-        if query.start_date:
-            stmt = stmt.where(Debt.date >= query.start_date)
-        if query.end_date:
-            stmt = stmt.where(Debt.date <= query.end_date)
-
+    def fetch_debts(self, shop_id):
+        shop_id = str(shop_id)
+        stmt = select(Debt).where(Debt.shop_id == shop_id)
         results = self.session.exec(stmt).all()
-        return results
+        if results:
+            return results
+        return []
 
     def get_debt_detail(self, shop_id, sale_ref):
         if self.is_deleted(shop_id):
@@ -79,6 +70,7 @@ class RecordsDB:
         ).all()
 
     def get_debtors(self, shop_id):
+        shop_id = str(shop_id)
         if self.is_deleted(shop_id):
             return
 
