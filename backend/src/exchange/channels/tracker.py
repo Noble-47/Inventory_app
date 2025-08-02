@@ -15,6 +15,7 @@ def create_record(**kwargs):
 
 def delete_record(**kwargs):
     logger.info("     [TRA] Removing inventory record")
+    shop_id = kwargs['shop_id']
     command = commands.DeleteRecord(shop_id=shop_id)
     handle(command)
 

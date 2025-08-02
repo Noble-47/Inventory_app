@@ -27,5 +27,6 @@ class SupplierDB:
         if shop_record is None:
             shop_record = ShopSupplier(shop_id=shop_id, supplier_phone=supplier.phone)
             self.session.add(shop_record)
+            self.session.flush()
         self.session.add(supplier)
         return shop_record

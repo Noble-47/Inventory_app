@@ -116,7 +116,7 @@ class Order(BaseModel, table=True):
         if self.status == OrderStatus.delivered:
             raise exceptions.DuplicateOrderDelivery()
 
-        if self.status == OrderStatus.Cancelled:
+        if self.status == OrderStatus.cancelled:
             raise exceptions.CancelledOrder()
 
         completed_batchline = []
