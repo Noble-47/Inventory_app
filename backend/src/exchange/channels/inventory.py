@@ -4,6 +4,10 @@ from shared import TIMEZONE, load_payload
 
 from inventory.bootstrap import bootstrap
 from inventory.domain import commands
+from shared import get_rotating_logger
+
+
+logger = get_rotating_logger("exchange-inventory", "exchange.log")
 
 try:
     bus = bootstrap(start_mapper=True)
@@ -12,19 +16,19 @@ except Exception as e:
 
 
 def create_inventory(**kwargs):
-    print("[INV] Creating new inventory")
+    logger.info("[INV] Creating new inventory")
     command = commands.CreateInventory(shop_id=kwargs["shop_id"])
     bus.handle(command)
 
 
 def remove_inventory(**kwargs):
-    print("[INV] Removing inventory record")
+    logger.info("[INV] Removing inventory record")
     command = commands.DeleteInventory(shop_id=kwargs["shop_id"])
     bus.handle(command)
 
 
 def update_inventory_setting(**kwargs):
-    print("[INV] Removing inventory record")
+    logger.info("[INV] Removing inventory record")
     command = commands.UpdateSetting(
         shop_id=kwargs["shop_id"], name=kwargs["name"], value=kwargs["value"]
     )
@@ -32,7 +36,7 @@ def update_inventory_setting(**kwargs):
 
 
 def dispatch(**kwargs):
-    print("[INV] Dispatching from inventory")
+    logger.info("[INV] Dispatching from inventory")
     products = kwargs["products"]
     timestamp = datetime.fromtimestamp(kwargs["date"], TIMEZONE)
     for stock in products:
@@ -46,7 +50,7 @@ def dispatch(**kwargs):
 
 
 def update_quantity(**kwargs):
-    print("[INV] Updating product quantity")
+    logger.info("[INV] Updating product quantity")
     products = kwargs.get("products")
     if product is None:
         return
@@ -61,7 +65,7 @@ def update_quantity(**kwargs):
 
 
 def add_to_inventory(**kwargs):
-    print("[INV] Updating product quantity")
+    logger.info("[INV] Updating product quantity")
     payload = load_payload(kwargs["payload"])
     for line in payload["orderline"]:
         cmd = commands.AddBatchToStock(
@@ -76,7 +80,7 @@ def add_to_inventory(**kwargs):
 
 
 def initialize_hub(hub):
-    print("[x] Initializing inventory exchange....", end="")
+    logger.info("[x] Initializing inventory exchange....")
     exchange = hub.create_exchange("inventory")
 
     exchange.listen_on(subject="new_shop_added", handler=create_inventory)
@@ -93,4 +97,4 @@ def initialize_hub(hub):
 
     exchange.listen_on(subject="new_deliveries", handler=add_to_inventory)
 
-    print("Done.")
+    logger.info("Done.")

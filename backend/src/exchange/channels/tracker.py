@@ -3,22 +3,24 @@ from shared import TIMEZONE
 
 from debt_tracker.domain import commands
 from debt_tracker.handlers import handle
+from shared import get_rotating_logger
 
+logger = get_rotating_logger("exchange-tracker", "exchange.log")
 
 def create_record(**kwargs):
-    print(" [TRA] Creating new inventory")
+    logger.info(" [TRA] Creating new inventory")
     command = commands.CreateRecord(shop_id=kwargs["shop_id"])
     handle(command)
 
 
 def delete_record(**kwargs):
-    print("     [TRA] Removing inventory record")
+    logger.info("     [TRA] Removing inventory record")
     command = commands.DeleteRecord(shop_id=shop_id)
     handle(command)
 
 
 def check_payment_for_deficit(**kwargs):
-    print("     [TRA] Checking sale record for payment deficit")
+    logger.info("     [TRA] Checking sale record for payment deficit")
     command = commands.RecordDebt(
         shop_id=kwargs["shop_id"],
         sale_ref=kwargs["sale_ref"],
@@ -49,7 +51,7 @@ def update_debt_info(selling_price, amount_paid, sale_ref, shop_id):
 
 
 def update_handler(**kwargs):
-    print("     [TRA] Check if update is required.")
+    logger.info("     [TRA] Check if update is required.")
     firstname = kwargs.get("firstname")
     lastname = kwargs.get("lastname")
     if firstname or lastname:
@@ -75,7 +77,7 @@ def update_handler(**kwargs):
 
 
 def initialize_hub(hub):
-    print("[x] Initializing tracker exchange", end="")
+    logger.info("[x] Initializing tracker exchange")
     exchange = hub.create_exchange("tracker")
 
     exchange.establish_channel(
@@ -100,4 +102,4 @@ def initialize_hub(hub):
     # exchange.listen_on(
     #    subject="tracker_setting_update", handler=update_inventory_setting
     # )
-    print("...Done.")
+    logger.info("...Done.")

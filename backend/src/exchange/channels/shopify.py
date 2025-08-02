@@ -1,5 +1,9 @@
+from shared import get_rotating_logger
+
+logger = get_rotating_logger("exchange-shopify", "exchange.log")
+
 def initialize_hub(hub):
-    print("[x] Initializing shopify exchange...", end="")
+    logger.info("[x] Initializing shopify exchange...")
     exchange = hub.create_exchange("shopify")
 
     exchange.establish_channel(
@@ -15,4 +19,4 @@ def initialize_hub(hub):
             "order_setting_updates",
         ],
     )
-    print("Done")
+    logger.info("Done")

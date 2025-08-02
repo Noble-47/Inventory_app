@@ -10,10 +10,13 @@ import json
 
 from sales.domain import commands
 from sales.handlers import handle
+from shared import get_rotating_logger
 
+
+logger = get_rotating_logger("exchange-sales", "exchange.log")
 
 def update_amount_paid(**kwargs):
-    print("[SA] Updating amount paid")
+    logger.info("[SA] Updating amount paid")
     shop_id = kwargs["shop_id"]
     sale_ref = kwargs["sale_ref"]
     amount_paid = json.loads(kwargs["payload"])["amount_paid"]
@@ -24,7 +27,7 @@ def update_amount_paid(**kwargs):
 
 
 def effect_debt_waived(**kwargs):
-    print("[SA] Propagating debt waive")
+    logger.info("[SA] Propagating debt waive")
     shop_id = kwargs["shop_id"]
     ref = kwargs["sale_ref"]
     command = commands.WaiveDebt(shop_id=shop_id, ref=ref)
@@ -32,19 +35,19 @@ def effect_debt_waived(**kwargs):
 
 
 def create_record(**kwargs):
-    print("[SA] Creating inventory record.")
+    logger.info("[SA] Creating inventory record.")
     shop_id = kwargs["shop_id"]
     command = commands.CreateShopRecord(shop_id=shop_id)
 
 
 def delete_record(**kwargs):
-    print("[SA] Deleting inventory record.")
+    logger.info("[SA] Deleting inventory record.")
     shop_id = kwargs["shop_id"]
     command = commands.DeleteShopRecord(shop_id=shop_id)
 
 
 def initialize_hub(hub):
-    print("[x] Initializing sales exchange...", end="")
+    logger.info("[x] Initializing sales exchange...")
     exchange = hub.create_exchange("sales")
 
     exchange.establish_channel(
@@ -62,4 +65,4 @@ def initialize_hub(hub):
     exchange.listen_on(subject="payment_received", handler=update_amount_paid)
 
     exchange.listen_on(subject="debt_waived", handler=effect_debt_waived)
-    print("Done...")
+    logger.info("Done...")
