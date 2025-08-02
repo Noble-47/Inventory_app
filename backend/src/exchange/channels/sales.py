@@ -38,12 +38,14 @@ def create_record(**kwargs):
     logger.info("[SA] Creating inventory record.")
     shop_id = kwargs["shop_id"]
     command = commands.CreateShopRecord(shop_id=shop_id)
+    handle(command)
 
 
 def delete_record(**kwargs):
     logger.info("[SA] Deleting inventory record.")
     shop_id = kwargs["shop_id"]
     command = commands.DeleteShopRecord(shop_id=shop_id)
+    handle(command)
 
 
 def initialize_hub(hub):

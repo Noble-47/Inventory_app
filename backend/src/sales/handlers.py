@@ -10,13 +10,13 @@ logger = get_rotating_logger("sales", "sales.log")
 
 def create_record(cmd: commands.CreateShopRecord, db):
     with db:
-        db.records.create(shop_id)
+        db.record.create(cmd.shop_id)
         db.commit()
 
 
 def delete_record(cmd: commands.DeleteShopRecord, db):
     with db:
-        db.records.delete(shop_id)
+        db.record.delete(cmd.shop_id)
         db.commit()
 
 
@@ -93,7 +93,7 @@ def handle(command):
         try:
             handler(command, db)
         except Exception as e:
-            logger.error("Error {handler.__name__} : {e}")
+            logger.error(f"Error {handler.__name__} : {e}")
             raise e
         else:
             logger.info("done")
@@ -101,10 +101,10 @@ def handle(command):
     for event in db.collect_events():
         logger.info(f"Received event {event}")
         for handler in event_handlers.get(type(event), []):
-            logger.info("Handling event with {handler.__name__}")
+            logger.info(f"Handling event with {handler.__name__}")
             try:
                 handler(event, db)
             except Exception as e:
-                logger.error("Error {handler.__name__} : {e}")
+                logger.error(f"Error {handler.__name__} : {e}")
             else:
                 logger.info("Done")

@@ -40,7 +40,7 @@ DEFAULT_SETTINGS = [
 ]
 
 FRONTEND_ROOT_URL = os.environ.get("FRONTEND_HOST", "http://localhost.com:4200")
-SERVER_ROOT_URL = os.environ.get("FRONTEND_HOST", "http://localhost.com:8000")
+SERVER_ROOT_URL = os.environ.get("SERVER_HOST", "https://inventra-zjec.onrender.com")
 
 EMAIL_PROVIDER_KEY = os.environ.get("EMAIL_PROVIDER_KEY")
 ADMIN_EMAIL = "inventra@email.com"
