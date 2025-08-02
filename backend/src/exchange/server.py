@@ -29,7 +29,7 @@ exchange_app.add_middleware(
 @exchange_app.on_event("startup")
 def startup():
     start_mappers()
-    # inventory.start_mappers()
+    create_tables()
 
 
 def create_hub(session):
@@ -47,15 +47,10 @@ def create_hub(session):
 
 
 def setup(app: FastAPI):
-
-    @app.on_event("startup")
-    def startup():
-        create_tables()
-
+    # exchange primer
     publish("dummy-notification", "dummy-subject", {"dummy" : "data"})
     publish("dummy-notification", "dummy-subject", {"dummy" : "data"})
     publish("dummy-notification", "dummy-subject", {"dummy" : "data"})
-    #app.mount("/exchange", exchange_app)
 
 
 @exchange_app.post("/exchange/{channel}/{subject}")
