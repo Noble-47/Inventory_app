@@ -10,9 +10,9 @@ from exchange.channels import shopify
 from exchange.channels import orders
 from exchange.channels import sales
 
-from exchange.hub import Hub
 from exchange.router import Router
 from exchange.models import Message
+from exchange.hub import Hub, publish
 from exchange.db import create_tables, start_mappers, db_session
 
 exchange_app = FastAPI(title="Inventra Exchange")
@@ -52,6 +52,9 @@ def setup(app: FastAPI):
     def startup():
         create_tables()
 
+    publish("dummy-notification", "dummy-subject", {"dummy" : "data"})
+    publish("dummy-notification", "dummy-subject", {"dummy" : "data"})
+    publish("dummy-notification", "dummy-subject", {"dummy" : "data"})
     #app.mount("/exchange", exchange_app)
 
 
