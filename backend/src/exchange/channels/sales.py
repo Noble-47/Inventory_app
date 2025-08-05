@@ -15,6 +15,7 @@ from shared import get_rotating_logger
 
 logger = get_rotating_logger("exchange-sales", "exchange.log")
 
+
 def update_amount_paid(**kwargs):
     logger.info("[SA] Updating amount paid")
     shop_id = kwargs["shop_id"]

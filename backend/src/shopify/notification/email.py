@@ -168,7 +168,7 @@ class MailTrap(EmailNotifier):
         msg["to"] = email
         msg.attach(MIMEText(message, "html"))
 
-        #msg.set_content(message)
+        # msg.set_content(message)
 
         with smtplib.SMTP("sandbox.smtp.mailtrap.io", 2525) as server:
             server.starttls()

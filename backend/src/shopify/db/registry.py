@@ -85,7 +85,7 @@ class Registry(db.BaseRepo):
             return shop_registry.manager.fullname
         return None
 
-    def get_managers(self, business_id:uuid.UUID):
+    def get_managers(self, business_id: uuid.UUID):
         shop_with_managers = self.session.exec(
             select(models.ShopRegistry, models.ManagerRegistry.assigned)
             .join(models.ManagerRegistry)

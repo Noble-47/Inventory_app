@@ -13,6 +13,7 @@ datetime_now_func = partial(datetime.now, tz=pytz.timezone("Africa/Lagos"))
 
 LOG_DIR = Path(__file__).parent.parent / "log"
 
+
 def get_rotating_logger(logger_name: str, log_filename: str) -> logging.Logger:
     """
     Returns a logger with a RotatingFileHandler that writes to log/log_filename at the project root.
@@ -25,7 +26,7 @@ def get_rotating_logger(logger_name: str, log_filename: str) -> logging.Logger:
 
     if not logger.handlers:
         handler = RotatingFileHandler(log_file, maxBytes=2 * 1024 * 1024, backupCount=5)
-        formatter = logging.Formatter('[%(asctime)s] %(levelname)s %(message)s')
+        formatter = logging.Formatter("[%(asctime)s] %(levelname)s %(message)s")
         handler.setFormatter(formatter)
         logger.addHandler(handler)
 

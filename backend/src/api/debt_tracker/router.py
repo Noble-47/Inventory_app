@@ -21,15 +21,15 @@ def view_debtors_list(shop_id: ShopIDDep):
     debtors = views.get_debtors(shop_id)
     if debtors:
         return debtors
-    return Response(content={}, status_code=200)
+    raise HTTPException(status_code=404, detail="Shop record not found")
 
 
-@router.get("/debt_tracker/{sale_ref}", response_model=models.DebtRead)
-def get_debt_details(shop_id: ShopIDDep, sale_ref: str):
+@router.get("/debt_tracker/{sale_ref}")
+def get_debt_details(shop_id: ShopIDDep, sale_ref: str) -> models.DebtRead:
     debt = views.get_debt(shop_id, sale_ref=sale_ref)
     if debt:
-        return debt
-    raise HTTPException(status_code=404, detail=f"No debt record for {sale_ref}")
+        return models.DebtRead(**debt)
+    return {}
 
 
 # can clear customer debt
@@ -64,4 +64,4 @@ def make_payment(shop_id: ShopIDDep, payment: models.Payment):
     # except:
     #    pass
     # else:
-    #    return {"message" : "Payment recorded"}
+    return {"message": "Payment recorded"}

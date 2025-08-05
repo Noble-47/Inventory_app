@@ -10,6 +10,7 @@ from stock_port.domain.models import batch_ref_gen, BatchLine
 
 logger = get_rotating_logger("orders", "orders.log")
 
+
 def create_record(cmd: commands.CreateShopRecord, db):
     with db:
         db.records.create(cmd.shop_id)

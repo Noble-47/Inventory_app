@@ -40,7 +40,7 @@ class Profile(Account):
     is_verified: bool
     business: None | list[BusinessDetail] = Field(default=None)
     managed_shops: None | list[ManagedShopDetail] = Field(default=None)
-    account_type:str
+    account_type: str
 
 
 class Token(BaseModel):

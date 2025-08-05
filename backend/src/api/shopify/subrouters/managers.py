@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Literal
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel
 
 from shopify.domain import commands
@@ -22,18 +22,13 @@ router = APIRouter(
 
 
 @router.get("/", response_model=list[Manager])
-def get_managers_list(business_id: BusinessIDDep):
+def get_managers_list(business_id: BusinessIDDep) -> list[Manager]:
     view = views.get_business_managers(business_id)
-    if view:
-        return view
-    raise HTTPException("No manager found in business registry")
+    return [Manager(**item) for item in view]
 
 
-@router.delete("{shop_location}/remove")
+@router.delete("/{shop_location}/remove")
 def dismiss_shop_manager(business_id: BusinessIDDep, shop_id: ShopIDDep):
-    cmd = commands.DismissManager(
-        business_id=business_id,
-        shop_id=shop_id
-    )
+    cmd = commands.DismissManager(business_id=business_id, shop_id=shop_id)
     bus.handle(cmd)
-    return {"message" : "Manager dismissed"}
+    return {"message": "Manager dismissed"}

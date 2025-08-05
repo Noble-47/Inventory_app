@@ -8,6 +8,7 @@ from shared import get_rotating_logger
 
 logger = get_rotating_logger("exchange-orders", "exchange.log")
 
+
 def create_record(**kwargs):
     logger.info(" [ORD] Creating new inventory")
     command = commands.CreateShopRecord(shop_id=kwargs["shop_id"])

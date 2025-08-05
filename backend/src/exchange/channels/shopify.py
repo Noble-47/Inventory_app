@@ -2,6 +2,7 @@ from shared import get_rotating_logger
 
 logger = get_rotating_logger("exchange-shopify", "exchange.log")
 
+
 def initialize_hub(hub):
     logger.info("[x] Initializing shopify exchange...")
     exchange = hub.create_exchange("shopify")

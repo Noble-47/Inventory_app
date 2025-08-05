@@ -19,34 +19,30 @@ router = APIRouter(
 )
 
 
-@router.get("/list", response_model=models.SaleList)
+@router.get("/list")
 def view_shop_sales(
     shop_id: ShopIDDep, query: Annotated[models.SaleQueryParams, Query(), None] = None
-):
+) -> models.SaleList:
     view = views.fetch_sales(shop_id, query)
     if view:
-        return view
-    raise HTTPException(
-        status_code=404, detail="No sales for shop or shop does not exists"
-    )
+        return models.SaleList(**view)
+    return {}
 
 
-@router.get("/history", response_model=models.SaleLogs)
-def view_sale_histry(shop_id: ShopIDDep):
+@router.get("/history")
+def view_sale_histry(shop_id: ShopIDDep) -> models.SaleLogs:
     view = views.get_sale_history(shop_id)
     if view:
-        return view
-    raise HTTPException(
-        status_code=404, detail="No logs for shop or shop does not exists"
-    )
+        return models.SaleLogs(**view)
+    return {}
 
 
-@router.get("/{ref}", response_model=models.SaleRead)
-def view_sale_detail(shop_id: ShopIDDep, ref: UUID):
+@router.get("/{ref}")
+def view_sale_detail(shop_id: ShopIDDep, ref: UUID) -> models.SaleRead:
     view = views.get_sale_detail(shop_id, ref)
     if view:
-        return view
-    raise HTTPException(status_code=404, detail="Shop or ref doesn't exists")
+        return models.SaleRead(**view)
+    return {}
 
 
 @router.post("/", dependencies=[Depends(verify_products_can_be_dispatched)])

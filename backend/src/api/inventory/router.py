@@ -10,7 +10,6 @@ from api.inventory import bus
 from api.inventory import models
 from api.shared_dependencies import ShopIDDep
 from api.shared_dependencies import get_user_shop_association
-from api.shared_dependencies import permission_checker_factory
 
 router = APIRouter(
     prefix="/{business_name}/{shop_location}/inventory",
@@ -22,43 +21,37 @@ router = APIRouter(
     ],
 )
 
-requires_permission = permission_checker_factory("inventory")
 
-
-@router.get("/", response_model=models.ShopView)
-async def inventory_view(shop_id: ShopIDDep):
+@router.get("/")
+async def inventory_view(shop_id: ShopIDDep) -> models.ShopView:
     view = await views.get_inventory_view(shop_id)
     if view:
-        return view
-    raise HTTPException(status_code=404, detail="Inventory is empty or does not exist")
+        return models.ShopView(**view)
+    return {}
 
 
-@router.get("/{sku}", response_model=models.StockView)
-async def view_stock(shop_id: ShopIDDep, sku: str):
+@router.get("/{sku}")
+async def view_stock(shop_id: ShopIDDep, sku: str) -> models.StockView:
     view = await views.get_stock_view(shop_id=shop_id, sku=sku)
     if view:
-        return view
-    raise HTTPException(status_code=404, detail="Stock does not exist")
+        return models.StockView(**view)
+    return {}
 
 
-@router.get("/{sku}/history", response_model=models.StockAudit)
-async def view_stock_history(shop_id: ShopIDDep, sku):
+@router.get("/{sku}/history")
+async def view_stock_history(shop_id: ShopIDDep, sku) -> models.StockAudit:
     view = await views.get_stock_history(shop_id=shop_id, sku=sku)
     if view:
-        return view
-    raise HTTPException(
-        status_code=404, detail="Stock Log is empty or stock does not exist"
-    )
+        return models.StockAudit(**view)
+    return {}
 
 
-@router.get("/{sku}/batch/{batch_ref}", response_model=models.BatchAudit)
-async def view_batch(shop_id: ShopIDDep, sku: str, batch_ref: str):
+@router.get("/{sku}/batch/{batch_ref}")
+async def view_batch(shop_id: ShopIDDep, sku: str, batch_ref: str) -> models.BatchAudit:
     view = await views.get_batch(shop_id, sku, batch_ref)
     if view:
-        return view
-    raise HTTPException(
-        status_code=404, detail="Stock or batch log is empty or does not exist"
-    )
+        return models.BatchAudit(**view)
+    return {}
 
 
 @router.post("/add")
@@ -87,7 +80,6 @@ def add_stock(shop_id: ShopIDDep, stock: models.CreateStock):
 
 # requires can_delete_product
 @router.delete("/{sku}")
-# @requires_permission("can_delete_product")
 def delete_stock(shop_id: ShopIDDep, sku: str):
     """
     Delete a product record from inventory.

@@ -70,12 +70,11 @@ class RecordsDB:
         ).all()
 
     def get_debtors(self, shop_id):
-        shop_id = str(shop_id)
         if self.is_deleted(shop_id):
             return
 
         return self.session.exec(
             select(Debtor)
             .join(ActiveRecord)
-            .where(ActiveRecord.shop_id == shop_id, ActiveRecord.active == False)
+            .where(ActiveRecord.shop_id == shop_id, ActiveRecord.active == True)
         ).all()

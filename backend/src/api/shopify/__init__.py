@@ -88,4 +88,3 @@ def setup(app: FastAPI):
                 status_code=500, detail="Something Unexpected Occurred."
             )
         return {"message": "Invitation confirmed, Kindly check your email to proceed"}
-

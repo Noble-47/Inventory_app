@@ -53,7 +53,18 @@ class StockView:
 
     @property
     def price(self):
-        return 100.00
+        return next(
+            (
+                batch.price
+                for batch in self.controller.dispatch_generator()
+                if batch.quantity > 0
+            ),
+            0.0,
+        )
+
+    @property
+    def name(self):
+        return self.product.name
 
     # @model_serializer
     def model_dump(self):

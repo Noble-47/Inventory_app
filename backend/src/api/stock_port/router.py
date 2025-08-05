@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
 
 from stock_port.handlers import handle
 from stock_port.domain import commands
@@ -32,6 +32,7 @@ def view_shop_suppliers(shop_id: ShopIDDep):
     view = views.get_suppliers(shop_id)
     if view:
         return view
+    return Response(content={}, status_code=200)
     raise HTTPException(status_code=404, detail="Shop record not found")
 
 
@@ -40,7 +41,7 @@ def view_supplier_detail(shop_id: ShopIDDep, supplier_id: int):
     view = views.get_supplier_details(shop_id, supplier_id)
     if view:
         return view
-    raise HTTPException(status_code=404, detail="Supplier not found")
+    return Response(content={}, status_code=200)
 
 
 @router.get("/history", response_model=models.ShopHistory)
@@ -48,7 +49,7 @@ def view_order_history(shop_id: ShopIDDep):
     view = views.get_shop_history(shop_id)
     if view:
         return view
-    raise HTTPException(status_code=404, detail="Shop record not found")
+    return Response(content={}, status_code=200)
 
 
 @router.get("/{order_id}", response_model=models.Order)
@@ -56,7 +57,7 @@ def view_order(shop_id: ShopIDDep, order_id: UUID):
     view = views.get_order_details(shop_id=shop_id, order_id=order_id)
     if view:
         return view
-    raise HTTPException(status_code=404, detail="Order not found")
+    return Response(content={}, status_code=200)
 
 
 @router.post("/create")
@@ -96,7 +97,7 @@ def process_delivery(shop_id: ShopIDDep, delivery: models.ProcessDelivery):
     return {"Message": "Order marked as delivered"}
 
 
-@router.post("/{order_id}/cancel")
+@router.post("/cancel")
 def cancel_order(shop_id: ShopIDDep, cancel: models.CancelOrder):
     cmd = commands.CancelOrder(
         shop_id=shop_id, order_id=cancel.order_id, reason=cancel.reason

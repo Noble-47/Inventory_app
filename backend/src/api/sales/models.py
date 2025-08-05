@@ -3,6 +3,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
+from shared import datetime_now_func
+
 
 class Unit(BaseModel):
     product_sku: str
@@ -14,7 +16,6 @@ class SaleWrite(BaseModel):
     lastname: str | None = Field(default=None)
     phone_number: str
     units: list[Unit]
-    date: datetime
     selling_price: float
     amount_paid: float
 

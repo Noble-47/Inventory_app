@@ -48,9 +48,9 @@ def create_hub(session):
 
 def setup(app: FastAPI):
     # exchange primer
-    publish("dummy-notification", "dummy-subject", {"dummy" : "data"})
-    publish("dummy-notification", "dummy-subject", {"dummy" : "data"})
-    publish("dummy-notification", "dummy-subject", {"dummy" : "data"})
+    publish("dummy-notification", "dummy-subject", {"dummy": "data"})
+    publish("dummy-notification", "dummy-subject", {"dummy": "data"})
+    publish("dummy-notification", "dummy-subject", {"dummy": "data"})
 
 
 @exchange_app.post("/exchange/{channel}/{subject}")

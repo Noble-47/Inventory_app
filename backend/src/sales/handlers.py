@@ -8,6 +8,7 @@ from sales.db import DB
 
 logger = get_rotating_logger("sales", "sales.log")
 
+
 def create_record(cmd: commands.CreateShopRecord, db):
     with db:
         db.record.create(cmd.shop_id)
@@ -55,7 +56,7 @@ def delete_sale(cmd: commands.DeleteSale, db):
 
 
 def publish_new_sale(event: events.NewSaleAdded, db):
-    logger.info("[x] Publishing sale update")
+    logger.info("[x] Publishing new sale")
     publish("sales_notifications", "new_sale", event.model_dump())
 
 
@@ -87,7 +88,7 @@ event_handlers = {
 
 def handle(command):
     db = DB()
-    logger.info(f"Received command {command}")
+    logger.info(f"Received command {command!r}")
     for handler in command_handlers.get(type(command)):
         logger.info(f"Handling command with {handler.__name__}")
         try:
@@ -99,7 +100,7 @@ def handle(command):
             logger.info("done")
     # add event listners here if necessary
     for event in db.collect_events():
-        logger.info(f"Received event {event}")
+        logger.info(f"Received event {event!r}")
         for handler in event_handlers.get(type(event), []):
             logger.info(f"Handling event with {handler.__name__}")
             try:
