@@ -40,7 +40,7 @@ class Order(BaseModel):
 
 class DeliveryLine(BaseModel):
     sku:str
-    quantity:str
+    quantity:int
     cost:float | None = Field(default=None)
 
 class ProcessDelivery(BaseModel):
