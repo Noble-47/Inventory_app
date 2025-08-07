@@ -38,7 +38,7 @@ class Order(BaseModel):
     status: str
     cost: float
 
-Class DeliveryLine(BaseModel):
+class DeliveryLine(BaseModel):
     sku:str
     quantity:str
     cost:float | None = Field(default=None)
