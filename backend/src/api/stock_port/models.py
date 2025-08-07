@@ -38,23 +38,28 @@ class Order(BaseModel):
     status: str
     cost: float
 
+Class DeliveryLine(BaseModel):
+    sku:str
+    quantity:str
+    cost:float | None = Field(default=None)
 
 class ProcessDelivery(BaseModel):
     order_id: UUID
-    orderline: dict[str, dict[str, Any]] = Field(
-        description="Use this to pass in the quantity delivered as well as other info like 'cost' if need. the key must be the product sku and the value a dictionary with keywords `quantity`, `cost` and their respective values"
-    )
+    orderline: list[DeliveryLine]
+    #orderline: dict[str, dict[str, Any]] = Field(
+    #    description="Use this to pass in the quantity delivered as well as other info like 'cost' if need. the key must be the product sku and the value a dictionary with keywords `quantity`, `cost` and their respective values"
+    #)
 
-    model_config = {
-        "json_schema_extra": {
-            "examples": [
-                {
-                    "order_id": "",
-                    "orderline": {"product-sku": {"quantity": 12, "cost": ""}},
-                }
-            ]
-        }
-    }
+    #model_config = {
+    #    "json_schema_extra": {
+    #        "examples": [
+    #            {
+    #                "order_id": "",
+    #                "orderline": {"product-sku": {"quantity": 12, "cost": ""}},
+    #            }
+    #        ]
+    #   }
+    #}
 
 
 class OrderSlim(BaseModel):
