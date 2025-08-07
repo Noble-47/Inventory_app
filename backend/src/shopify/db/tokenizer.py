@@ -97,7 +97,7 @@ class Tokenizer:
     def get_shop_invite(self, shop_id: uuid.UUID):
         invite = self.session.exec(
             select(Token).where(Token.shop_id == shop_id, Token.is_valid == True)
-        ).first()
+        ).all()
         return invite
 
     def mark_as_sent(self, token_str: str):
