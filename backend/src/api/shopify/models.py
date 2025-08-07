@@ -129,7 +129,7 @@ class Invite(BaseModel):
 class ShopInvite(BaseModel):
     id: UUID
     location: str
-    invite: Invite
+    invite: list[Invite]
 
 
 class BusinessInvite(BaseModel):
