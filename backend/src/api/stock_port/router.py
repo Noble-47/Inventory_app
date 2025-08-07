@@ -76,10 +76,14 @@ def create_new_order(shop_id: ShopIDDep, order: models.CreateOrder):
 
 @router.post("/complete-order")
 def process_delivery(shop_id: ShopIDDep, delivery: models.ProcessDelivery):
+    orderline = dict(
+        (d['sku'], {'quantity':d['quantity'], 'cost':d['cost']})
+        for d in cmd.orderline
+    )
     cmd = commands.ProcessDelivery(
         shop_id=shop_id,
         order_id=delivery.order_id,
-        orderline=delivery.orderline,
+        orderline=orderline,
     )
     try:
         handle(cmd)
