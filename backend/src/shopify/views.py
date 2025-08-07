@@ -139,19 +139,19 @@ def business_invites(business_id: uuid.UUID):
 def shop_invite(shop_id: uuid.UUID):
     session = next(db.db_session())
     token_db = db.Tokenizer(session)
-    invite = token_db.get_shop_invite(shop_id)
-    if invite:
+    invites = token_db.get_shop_invite(shop_id)
+    if invites:
         return {
             "id": invite.shop_id,
             "location": invite.shop_location,
-            "invite": {
+            "invite": [{
                 "for": invite.email,
                 "created": invite.created,
                 "used": invite.used,
                 "expired": invite.expired,
                 "token": invite.token_str,
                 "sent": invite.sent,
-            },
+            } for invite in invites],
         }
     return None
 
