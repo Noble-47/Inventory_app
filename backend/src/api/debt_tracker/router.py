@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Optional
 from fastapi import APIRouter, Depends, Query, Response, HTTPException
 
 from debt_tracker import views
@@ -16,16 +16,15 @@ router = APIRouter(
 )
 
 
-@router.get("/debt_tracker/list", response_model=models.DebtorList)
+@router.get("/debt_tracker/list", response_model=Optional[models.DebtorList])
 def view_debtors_list(shop_id: ShopIDDep):
     debtors = views.get_debtors(shop_id)
     if debtors:
         return debtors
-    raise HTTPException(status_code=404, detail="Shop record not found")
 
 
-@router.get("/debt_tracker/{sale_ref}")
-def get_debt_details(shop_id: ShopIDDep, sale_ref: str) -> models.DebtRead:
+@router.get("/debt_tracker/{sale_ref}", response_model=Optional[models.DebtRead])
+def get_debt_details(shop_id: ShopIDDep, sale_ref: str):
     debt = views.get_debt(shop_id, sale_ref=sale_ref)
     if debt:
         return models.DebtRead(**debt)

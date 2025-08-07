@@ -5,7 +5,10 @@ from dataclasses import dataclass, field
 from datetime import datetime
 import json
 
-from shared import datetime_now_func
+from shared import datetime_now_func, get_rotating_logger
+
+
+logger = get_rotating_logger("exchange", "exchange.log")
 
 
 def do_nothing(*args, **kwargs):
@@ -58,11 +61,11 @@ class Receiver:
 
     def acknowledge(self):
         # if callable(self.recipient.handler)
-        print(
+        logger.info(
             f"[ACK] Acknowledging Message {self.message.subject} - {self.recipient.service}"
         )
         handler = self.recipient.handler
-        print(handler.__name__)
+        logger.info(f"[AKC] Handler: {handler.__name__}")
         handler(**self.message.data)
         self.acknowledged = True
 

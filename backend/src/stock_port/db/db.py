@@ -4,7 +4,7 @@ import json
 
 from sqlmodel import Session, SQLModel, create_engine
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy import event
+from sqlalchemy import event, func, select
 
 from shared import TIMEZONE
 from stock_port import config
@@ -36,9 +36,8 @@ def db_session():
 @event.listens_for(Supplier, "before_insert")
 def receive_before_insert(mapper, connection, target):
     # Get the current max counter value and increment it
-    max_id = connection.execute(
-        Supplier.__table__.select().order_by(Supplier.id.desc()).limit(1)
-    ).scalar_one_or_none()
+    max_id = connection.execute(select(func.max(Supplier.id))).scalar()
+    print(max_id)
     target.id = (max_id or 0) + 1
 
 

@@ -62,6 +62,7 @@ class OrderStatus(str, Enum):
     pending = "pending"
     delivered = "delivered"
     cancelled = "cancelled"
+    incomplete = "incomplete"
 
 
 class BatchLine(BaseModel, table=True):
@@ -129,9 +130,12 @@ class Order(BaseModel, table=True):
             batch.delivery_date = datetime_now_func()
             completed_batchline.append(batch.model_dump())
 
-        if all(b.delivered_quantity for b in self.batchline):
+        if all(b.delivered_quantity == b.expected_quantity for b in self.batchline):
             self.status = OrderStatus.delivered
-            self.cost = sum(b.cost for b in self.batchline)
+        else:
+            self.status = OrderStatus.incomplete
+
+        self.cost = sum(b.cost for b in self.batchline)
         self.delivery_date = datetime_now_func()
 
         if completed_batchline:

@@ -4,3 +4,7 @@ class ShopRecordNotFound(Exception):
 
 class SaleRecordNotFound(Exception):
     pass
+
+
+class CustomerNotFound(Exception):
+    pass

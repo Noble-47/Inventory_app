@@ -29,7 +29,7 @@ def create_order(cmd: commands.CreateOrder, db):
             shop_id=cmd.shop_id,
             firstname=cmd.firstname,
             lastname=cmd.lastname,
-            phone=cmd.phone,
+            phone=str(cmd.phone),
         )
         batchline = [
             BatchLine(

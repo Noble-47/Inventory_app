@@ -69,6 +69,15 @@ class Tokenizer:
         self.session.add(token)
         return token
 
+    def delete(self, shop_id, email: str):
+        token = self.session.exec(
+            select(Token).where(Token.email == email, Token.shop_id == shop_id)
+        ).first()
+        if token:
+            self.session.delete(token)
+        else:
+            raise exceptions.InvalidInvite()
+
     def get(self, token_str: str, email: str):
         token = self.session.exec(
             select(Token).where(Token.token_str == token_str)

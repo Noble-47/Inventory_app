@@ -76,12 +76,12 @@ def invite(shop_id: ShopIDDep):
 
 @router.post("/{shop_location}/invite/delete")
 def delete_invite(shop_id: ShopIDDep):
-    pass
-
-
-@router.post("/{shop_location}/invite/update")
-def update_invite(shop_id: ShopIDDep):
-    pass
+    cmd = commands.DeleteInviteLink(shop_id=shop_id, email=email)
+    try:
+        bus.handle(cmd)
+    except exceptions.InvalidInvite:
+        return {"message": "Invite for email not found"}
+    return {"message": "Invite deleted"}
 
 
 @router.post("/{shop_location}/dismiss-manager")

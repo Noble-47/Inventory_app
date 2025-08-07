@@ -43,15 +43,30 @@ def update_sale(cmd: commands.UpdateSale, db):
     products = []
     with db:
         sale = db.sales.get(shop_id=cmd.shop_id, ref=cmd.ref)
-        updates = command.updates.model_dump()
-        sale.update(**upadtes)
+        sale.update(
+            selling_price=cmd.selling_price,
+            amount_paid=cmd.amount_paid,
+        )
         db.commit()
+        ## Messy hack
+        db.events.append(
+            events.SaleRecordUpdated(
+                shop_id=cmd.shop_id,
+                sale_ref=cmd.ref,
+                selling_price=cmd.selling_price,
+                amount_paid=cmd.amount_paid,
+                customer_phone=sale.customer_phone,
+                firstname=sale.customer.firstname,
+                lastname=sale.customer.lastname,
+            )
+        )
+
         return
 
 
 def delete_sale(cmd: commands.DeleteSale, db):
     with db:
-        db.sales.delete(shop_id=cmd.shop_id, ref=cmd.sale_ref)
+        db.sales.delete(shop_id=cmd.shop_id, ref=cmd.ref)
         db.commit()
 
 
@@ -83,6 +98,7 @@ command_handlers = {
 event_handlers = {
     events.NewSaleAdded: [publish_new_sale, log_event],
     events.SaleRecordUpdated: [publish_sale_update, log_event],
+    events.SaleRecordDeleted: [log_event],
 }
 
 

@@ -38,7 +38,7 @@ def update_inventory_setting(**kwargs):
 def dispatch(**kwargs):
     logger.info("[INV] Dispatching from inventory")
     products = kwargs["products"]
-    timestamp = datetime.fromtimestamp(kwargs["date"], TIMEZONE)
+    timestamp = datetime.fromtimestamp(kwargs["event_time"], TIMEZONE)
     for stock in products:
         command = commands.DispatchGoods(
             shop_id=kwargs["shop_id"],
@@ -93,7 +93,7 @@ def initialize_hub(hub):
 
     exchange.listen_on(subject="new_sale", handler=dispatch)
 
-    exchange.listen_on(subject="sale_update", handler=update_quantity)
+    # exchange.listen_on(subject="sale_update", handler=update_quantity)
 
     exchange.listen_on(subject="new_deliveries", handler=add_to_inventory)
 

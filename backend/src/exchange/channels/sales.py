@@ -54,7 +54,8 @@ def initialize_hub(hub):
     exchange = hub.create_exchange("sales")
 
     exchange.establish_channel(
-        channel="sales_notifications", subjects=["new_sale", "sale_update"]
+        channel="sales_notifications",
+        subjects=["new_sale", "sale_update", "customer_updates"],
     )
 
     exchange.listen_on(subject="new_shop_added", handler=create_record)

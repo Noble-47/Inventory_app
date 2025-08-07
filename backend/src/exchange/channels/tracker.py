@@ -4,25 +4,26 @@ from shared import TIMEZONE
 from debt_tracker.domain import commands
 from debt_tracker.handlers import handle
 from shared import get_rotating_logger
+from debt_tracker import utils
 
 logger = get_rotating_logger("exchange-tracker", "exchange.log")
 
 
 def create_record(**kwargs):
-    logger.info(" [TRA] Creating new inventory")
+    logger.info("[TRA] Creating new inventory")
     command = commands.CreateRecord(shop_id=kwargs["shop_id"])
     handle(command)
 
 
 def delete_record(**kwargs):
-    logger.info("     [TRA] Removing inventory record")
+    logger.info("[TRA] Removing inventory record")
     shop_id = kwargs["shop_id"]
     command = commands.DeleteRecord(shop_id=shop_id)
     handle(command)
 
 
 def check_payment_for_deficit(**kwargs):
-    logger.info("     [TRA] Checking sale record for payment deficit")
+    logger.info("[TRA] Checking sale record for payment deficit")
     command = commands.RecordDebt(
         shop_id=kwargs["shop_id"],
         sale_ref=kwargs["sale_ref"],
@@ -35,47 +36,45 @@ def check_payment_for_deficit(**kwargs):
     handle(command)
 
 
-def update_debtor_info(firstname, lastname, phone):
+def update_debtor_info(firstname, lastname, phone, shop_id, new_phone):
     command = commands.UpdateDebtorInfo(
-        firstname=firstname, lastname=lastname, phone=phone, shop_id=kwargs["shop_id"]
+        firstname=firstname,
+        lastname=lastname,
+        phone=phone,
+        shop_id=shop_id,
+        new_phone=new_phone,
     )
     handle(command)
 
-
-def update_debt_info(selling_price, amount_paid, sale_ref, shop_id):
-    cmd = commands.UpdateDebtInfo(
-        sale_ref=sale_ref,
-        shop_id=shop_id,
-        selling_price=selling_price,
-        amount_paid=amount_paid,
-    )
     handle(cmd)
 
 
 def update_handler(**kwargs):
-    logger.info("     [TRA] Check if update is required.")
-    firstname = kwargs.get("firstname")
-    lastname = kwargs.get("lastname")
-    if firstname or lastname:
-        phone = kwargs.get("phone")
-        if phone is None:
-            raise KeyError("Missing `phone` field.")
-        update_debtor_info(
-            firstname=firstname, lastname=lastname, phone=kwargs["phone"]
-        )
-
-    sale_ref = kwargs["sale_ref"]
+    logger.info("[TRA] Processing update")
     shop_id = kwargs["shop_id"]
-    selling_price = kwargs.get("selling_price")
-    amount_paid = kwargs.get("amount_paid")
-
+    sale_ref = kwargs["sale_ref"]
+    selling_price = kwargs["selling_price"]
+    amount_paid = kwargs["amount_paid"]
     if selling_price or amount_paid:
-        update_debtor_info(
-            selling_price=selling_price,
-            amount_paid=amount_paid,
-            sale_ref=sale_ref,
-            shop_id=shop_id,
-        )
+        logger.info("processing debt info")
+        if utils.debt_exists(shop_id=shop_id, sale_ref=sale_ref):
+            cmd = commands.UpdateDebtInfo(
+                sale_ref=sale_ref,
+                shop_id=shop_id,
+                selling_price=selling_price,
+                amount_paid=amount_paid,
+            )
+        else:
+            cmd = commands.RecordDebt(
+                shop_id=shop_id,
+                sale_ref=sale_ref,
+                firstname=kwargs["firstname"],
+                lastname=kwargs["lastname"],
+                phone=kwargs["customer_phone"],
+                selling_price=kwargs["selling_price"],
+                amount_paid=kwargs["amount_paid"],
+            )
+        handle(cmd)
 
 
 def initialize_hub(hub):

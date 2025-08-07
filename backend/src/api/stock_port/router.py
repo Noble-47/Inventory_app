@@ -94,7 +94,7 @@ def process_delivery(shop_id: ShopIDDep, delivery: models.ProcessDelivery):
         )
     except exceptions.CancelledOrder:
         raise HTTPException(status_code=400, detail="Order was previously cancelled")
-    return {"Message": "Order marked as delivered"}
+    return {"Message": "Delivery is being processed"}
 
 
 @router.post("/cancel")

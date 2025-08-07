@@ -31,7 +31,7 @@ class Router:
 
     async def broadcast(self, message: Message):
         if not (message.subject in self.subject_list):
-            logger.error(f"[-] Message Subject Is Not Recognized - {message.subject}")
+            logger.info(f"[-] Message Subject Is Not Recognized - {message.subject}")
             return
         subject = next(
             subject for subject in self.subjects if subject.name == message.subject

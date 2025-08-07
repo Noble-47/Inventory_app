@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Optional
 from datetime import datetime
 from uuid import UUID
 import hashlib
@@ -64,7 +64,6 @@ class Unit(BaseModel):
 class NewSaleAdded(Event):
     shop_id: SerializableUUID
     sale_ref: SerializableUUID
-    date: SerializableDateTime
     selling_price: float
     amount_paid: float
     firstname: str
@@ -78,15 +77,17 @@ class Updates(BaseModel):
     phone: str | None = Field(default=None)
     firstname: str | None = Field(default=None)
     lastname: str | None = Field(default=None)
-    selling_price: float | None = Field(default=None)
-    amount_paid: float | None = Field(default=None)
-    products: list[StringSerializedDict] | None = Field(default=None)
+    # products: list[StringSerializedDict] | None = Field(default=None)
 
 
 class SaleRecordUpdated(Event):
     shop_id: SerializableUUID
     sale_ref: SerializableUUID
-    updates: Updates
+    firstname: str
+    lastname: str
+    customer_phone: str
+    selling_price: float | None = Field(default=None)
+    amount_paid: float | None = Field(default=None)
     description: str = Field(default="Sale record updated")
 
 
@@ -94,3 +95,12 @@ class SaleRecordDeleted(Event):
     shop_id: SerializableUUID
     sale_ref: SerializableUUID
     description: str = Field(default="Sale record deleted")
+
+
+class CustomerRecordUpdated(Event):
+    shop_id: SerializableUUID
+    sale_ref: Optional[SerializableUUID] = Field(default=None)
+    firstname: str
+    lastname: str
+    phone: str
+    new_phone: str | None = Field(default=None)

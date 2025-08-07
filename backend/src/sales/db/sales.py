@@ -31,13 +31,9 @@ class SalesDB:
             products=products,
             amount_paid=amount_paid,
         )
-        print()
-        print(sale)
-        print()
         event = events.NewSaleAdded(
             shop_id=shop_id,
             sale_ref=sale.ref,
-            date=sale.date,
             amount_paid=amount_paid,
             firstname=customer.firstname,
             lastname=customer.lastname,
@@ -49,12 +45,12 @@ class SalesDB:
         self.events.append(event)
 
     def delete(self, shop_id, ref):
-        sale = get(shop_id, ref)
+        sale = self.get(shop_id, ref)
         self.session.delete(sale)
-        self.events.append(events.SaleRecordDelete(shop_id=shop_id, sale_reg=ref))
+        self.events.append(events.SaleRecordDeleted(shop_id=shop_id, sale_ref=ref))
 
     def get(self, shop_id, ref):
-        if not self.is_deleted(shop_id):
+        if self.is_deleted(shop_id):
             raise exceptions.ShopRecordNotFound()
         stmt = select(Sale).where(Sale.shop_id == shop_id, Sale.ref == ref)
         sale = self.session.exec(stmt).first()

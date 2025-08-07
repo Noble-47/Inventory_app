@@ -1,7 +1,7 @@
 from typing import Any
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class Command(BaseModel):
@@ -37,9 +37,18 @@ class CreateSale(Command):
 class UpdateSale(Command):
     shop_id: UUID
     ref: UUID
-    updates: dict[str, Any]
+    selling_price: float = Field(defualt=None)
+    amount_paid: float | None = Field(default=None)
 
 
 class DeleteSale(Command):
     shop_id: UUID
     ref: UUID
+
+
+class UpdateCustomerRecord:
+    shop_id: UUID
+    phone: str
+    new_phone: str | None = Field(default=None)
+    firstname: str
+    lastname: str

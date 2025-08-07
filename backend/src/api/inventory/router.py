@@ -1,3 +1,4 @@
+from typing import Optional
 import asyncio
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -23,35 +24,33 @@ router = APIRouter(
 
 
 @router.get("/")
-async def inventory_view(shop_id: ShopIDDep) -> models.ShopView:
+async def inventory_view(shop_id: ShopIDDep) -> Optional[models.ShopView]:
     view = await views.get_inventory_view(shop_id)
     if view:
         return models.ShopView(**view)
-    return {}
 
 
 @router.get("/{sku}")
-async def view_stock(shop_id: ShopIDDep, sku: str) -> models.StockView:
+async def view_stock(shop_id: ShopIDDep, sku: str) -> Optional[models.StockView]:
     view = await views.get_stock_view(shop_id=shop_id, sku=sku)
     if view:
         return models.StockView(**view)
-    return {}
 
 
 @router.get("/{sku}/history")
-async def view_stock_history(shop_id: ShopIDDep, sku) -> models.StockAudit:
+async def view_stock_history(shop_id: ShopIDDep, sku) -> Optional[models.StockAudit]:
     view = await views.get_stock_history(shop_id=shop_id, sku=sku)
     if view:
         return models.StockAudit(**view)
-    return {}
 
 
 @router.get("/{sku}/batch/{batch_ref}")
-async def view_batch(shop_id: ShopIDDep, sku: str, batch_ref: str) -> models.BatchAudit:
+async def view_batch(
+    shop_id: ShopIDDep, sku: str, batch_ref: str
+) -> Optional[models.BatchAudit]:
     view = await views.get_batch(shop_id, sku, batch_ref)
     if view:
         return models.BatchAudit(**view)
-    return {}
 
 
 @router.post("/add")

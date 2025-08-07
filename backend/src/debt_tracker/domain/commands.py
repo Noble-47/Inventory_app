@@ -44,5 +44,5 @@ class UpdateDebtorInfo(Command):
 class UpdateDebtInfo(Command):
     shop_id: str
     sale_ref: str
-    selling_price: str | None = Field(default=None)
-    amount_paid: str | None = Field(default=None)
+    selling_price: float | None = Field(default=None)
+    amount_paid: float | None = Field(default=None)

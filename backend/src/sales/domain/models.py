@@ -22,6 +22,9 @@ class Customer(SalesModel, table=True):
     def fullname(self):
         return f"{self.title or ''}" + self.firstname + f"{self.lastname or ''}"
 
+    def __hash__(self):
+        return hash(self.phone)
+
 
 class Product(SalesModel, table=True):
     __tablename__ = "products"
@@ -44,7 +47,9 @@ class Sale(SalesModel, table=True):
     customer: Customer = Relationship()
     amount_paid: float
     selling_price: float
-    products: list[SaleProductLink] = Relationship()
+    products: list[SaleProductLink] = Relationship(
+        sa_relationship_kwargs={"cascade": "all, delete"}
+    )
     date: datetime = Field(default_factory=datetime_now_func)
 
     def serialize(self):
@@ -72,14 +77,15 @@ class Sale(SalesModel, table=True):
 
     def update(
         self,
+        customer=None,
         firstname=None,
         lastname=None,
         products=None,
         selling_price=None,
         amount_paid=None,
     ):
-        customer.firstname = firstname or customer.firstname
-        customer.lastname = lastname or customer.lastname
+        if customer:
+            self.customer = customer
         self.selling_price = selling_price or self.selling_price
         self.amount_paid = amount_paid or self.amount_paid
         product_updates = products or []
@@ -106,7 +112,7 @@ class SaleAudit(SalesModel, table=True):
     __tablename__ = "sales_audit"
     id: int | None = Field(default=None, primary_key=True)
     shop_id: UUID
-    ref: UUID
+    ref: UUID = Field(nullable=True)
     description: str
     time: float
     event_hash: str = Field(unique=True)

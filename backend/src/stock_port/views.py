@@ -21,7 +21,7 @@ def get_order_details(shop_id, order_id: UUID):
         view["orderline"] = [b.model_dump() for b in order.batchline]
         view["supplier_firstname"] = order.supplier.firstname
         view["supplier_lastname"] = order.supplier.lastname
-        view["supplier_phone"] = order.supplier.phone
+        view["supplier_phone"] = str(order.supplier.phone)
         view["expected_delivery_date"] = order.expected_delivery_date
         view["delivery_date"] = order.delivery_date
         view["cost"] = order.cost

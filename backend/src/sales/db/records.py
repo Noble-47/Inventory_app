@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 from sqlmodel import select
 
 from sales.domain.models import (
@@ -33,37 +35,10 @@ class RecordsDB:
         ).first()
 
     def is_deleted(self, shop_id):
-        return bool(self.get(shop_id))
+        return not bool(self.get(shop_id))
 
-    def fetch_sales(self, shop_id, query):
-        stmt = (
-            select(Sale)
-            .join(Customer, isouter=True)
-            .join(SaleProductLink, isouter=True)
-            .join(Product, isouter=True)
-        )
-
-        if query.firstname:
-            stmt = stmt.where(Customer.firstname.ilike(query.firstname))
-
-        if query.lastname:
-            stmt = stmt.where(Customer.lastname.ilike(query.lastname))
-
-        if query.phone_number:
-            stmt = stmt.where(Customer.phone == query.phone_number)
-
-        if query.product:
-            stmt = stmt.where(Product.name.ilike(query.product))
-
-        if query.sku:
-            stmt = stmt.where(Product.name.ilike(query.sku))
-
-        if query.start_date:
-            stmt = stmt.where(Sale.date >= query.start_date)
-
-        if query.end_date:
-            stmt = stmt.where(Sale.date <= query.end_date)
-
+    def fetch_sales(self, shop_id):
+        stmt = select(Sale).where(Sale.shop_id == shop_id)
         results = self.session.exec(stmt).all()
         return results
 
@@ -82,3 +57,16 @@ class RecordsDB:
         return self.session.exec(
             select(SaleAudit).where(SaleAudit.shop_id == shop_id)
         ).all()
+
+    def get_customers(self, shop_id):
+        if self.is_deleted(shop_id):
+            return
+
+        customer_record = self.session.exec(
+            select(Customer, Sale).join(Sale).where(Sale.shop_id == shop_id)
+        ).all()
+
+        grouped = defaultdict(list)
+        for customer, purchase in customer_record:
+            grouped[customer].append(purchase)
+        return list(grouped.items())

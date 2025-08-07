@@ -55,34 +55,42 @@ def record_payment(cmd: commands.RecordPayment, db):
 
 def update_debtor_info(cmd: commands.UpdateDebtorInfo, db):
     with db:
-        debtor = db.debtors.get(shop_id, phone, firstname, lastname, trigger=False)
+        debtor = db.debtors.get(
+            shop_id=cmd.shop_id,
+            phone=cmd.phone,
+            firstname=cmd.firstname,
+            lastname=cmd.lastname,
+        )
         if debtor is None:
             return
         if cmd.firstname:
             debtor = cmd.firstname
         if cmd.lastname:
             debtor = cmd.lastname
+        if cmd.new_phone:
+            debtor.phone = new_phone
         db.commit()
 
 
 def update_debt_info(cmd: commands.UpdateDebtInfo, db):
     with db:
-        debt = db.debts.get(shop_id=shop_id, sale_ref=sale_ref)
+        cmd.shop_id = str(cmd.shop_id)
+        debt = db.debts.get(shop_id=cmd.shop_id, sale_ref=cmd.sale_ref)
         if debt is None:
             return
         if cmd.amount_paid and debt.last_paid_date is None:
-            debt.amount_paid = amount_paid
+            debt.amount_paid = cmd.amount_paid
         else:
             db.events.append(
                 messages.AttentionNeeded(
-                    shop_id=shop_id,
-                    sale_ref=sale_ref,
+                    shop_id=cmd.shop_id,
+                    sale_ref=cmd.sale_ref,
                     message="Conflict while updating debt's `amount_paid`",
                 )
             )
         if cmd.selling_price:
-            debt.selling_price = selling_price
-            if debt.amount_paid >= selling_price:
+            debt.selling_price = cmd.selling_price
+            if debt.amount_paid >= debt.selling_price:
                 debt.cleared = True
         db.commit()
 

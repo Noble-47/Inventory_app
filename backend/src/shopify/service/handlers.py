@@ -147,6 +147,7 @@ def update_setting(command: commands.UpdateSetting, uow: UnitOfWork):
                 name=command.name,
                 value=command.value,
                 entity_id=command.entity_id,
+                entity_type="shop",
             )
         except ValueError as err:
             raise exceptions.InvalidSettingKey(str(err))
@@ -238,6 +239,12 @@ def send_invitation_link(
         uow.commit()
 
 
+def delete_invitation_link(cmd: commands.DeleteInviteLink, uow: UnitOfWork):
+    with uow:
+        uow.tokenizer.delete(cmd.shop_id, cmd.email)
+        uow.commit()
+
+
 def notify_shop_created(event: events.AddedNewShop):
     hub.publish("shop_notifications", "new_shop_added", {"shop_id": str(event.shop_id)})
 
@@ -264,5 +271,6 @@ COMMAND_HANDLERS = {
     commands.CreateManager: [create_manager],
     commands.AssignManager: [assign_shop_manager],
     commands.DismissManager: [dismiss_shop_manager],
+    commands.DeleteInviteLink: [delete_invitation_link],
     commands.UpdateSetting: [update_setting],
 }

@@ -13,7 +13,10 @@ from exchange.channels import sales
 from exchange.router import Router
 from exchange.models import Message
 from exchange.hub import Hub, publish
+from shared import get_rotating_logger
 from exchange.db import create_tables, start_mappers, db_session
+
+logger = get_rotating_logger("exchange", "exchange.log")
 
 exchange_app = FastAPI(title="Inventra Exchange")
 
@@ -61,8 +64,8 @@ async def post_message(
     session: Annotated[Session, Depends(db_session)],
 ):
     hub = create_hub(session)
-    print(f"[o] Received Message From - {channel}")
-    print(f"[-] Message - {subject}")
+    logger.info(f"[o] Received Message From - {channel}")
+    logger.info(f"[-] Message - {subject}")
     message = Message(subject=subject, data=message)
     await hub.push(message)
     return "Message Acknowledged"

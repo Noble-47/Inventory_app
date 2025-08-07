@@ -1,10 +1,11 @@
-from typing import Annotated
+from typing import Annotated, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, HTTPException
 
 from sales.handlers import handle
 from sales.domain import commands
+from sales import exceptions
 from sales import views
 
 from api.sales import models
@@ -20,29 +21,30 @@ router = APIRouter(
 
 
 @router.get("/list")
-def view_shop_sales(
-    shop_id: ShopIDDep, query: Annotated[models.SaleQueryParams, Query(), None] = None
-) -> models.SaleList:
-    view = views.fetch_sales(shop_id, query)
+def view_shop_sales(shop_id: ShopIDDep) -> Optional[models.SaleList]:
+    view = views.fetch_sales(shop_id)
     if view:
         return models.SaleList(**view)
-    return {}
 
 
 @router.get("/history")
-def view_sale_histry(shop_id: ShopIDDep) -> models.SaleLogs:
+def view_sale_histry(shop_id: ShopIDDep) -> Optional[models.SaleLogs]:
     view = views.get_sale_history(shop_id)
     if view:
         return models.SaleLogs(**view)
-    return {}
+
+
+@router.get("/customers", response_model=Optional[models.ShopCustomer])
+def view_shop_customers(shop_id: ShopIDDep):
+    view = views.get_shop_customers(shop_id)
+    return view
 
 
 @router.get("/{ref}")
-def view_sale_detail(shop_id: ShopIDDep, ref: UUID) -> models.SaleRead:
+def view_sale_detail(shop_id: ShopIDDep, ref: UUID) -> Optional[models.SaleRead]:
     view = views.get_sale_detail(shop_id, ref)
     if view:
         return models.SaleRead(**view)
-    return {}
 
 
 @router.post("/", dependencies=[Depends(verify_products_can_be_dispatched)])
@@ -66,15 +68,22 @@ def create_new_sale(
 # can delete sale
 @router.delete("/{ref}")
 def delete_sale_record(shop_id: ShopIDDep, ref: str):
-    command = commands.DeleteSale(shop_id=shop_id, ref=reg)
+    command = commands.DeleteSale(shop_id=shop_id, ref=ref)
     handle(command)
-    return {"message": "sale record saved"}
+    return {"message": "sale record deleted"}
 
 
 # can update sale
-@router.patch("/{ref}", dependencies=[Depends(verify_products_can_be_dispatched)])
-def update_sale_record(shop_id: ShopIDDep, sale: models.Sale):
-    updates = sale.dump_model()
-    ref = updates.pop("ref")
-    command = commands.UpdateSale(shop_id=shop_id, ref=ref, updates=updates)
-    handle(command)
+@router.post("/{ref}/update", dependencies=[Depends(verify_products_can_be_dispatched)])
+def update_sale_record(shop_id: ShopIDDep, update: models.SaleUpdate, ref: str):
+    command = commands.UpdateSale(
+        shop_id=shop_id,
+        ref=ref,
+        selling_price=update.selling_price,
+        amount_paid=update.amount_paid,
+    )
+    try:
+        handle(command)
+    except exceptions.SaleRecordNotFound:
+        raise HTTPException(status_code=404, detail="Sale record not found")
+    return {"message": "sale record updated"}

@@ -59,3 +59,8 @@ class AssignManager(Command):
 class DismissManager(Command):
     business_id: uuid.UUID
     shop_id: uuid.UUID
+
+
+class DeleteInviteLink(Command):
+    shop_id: uuid.UUID
+    email: str

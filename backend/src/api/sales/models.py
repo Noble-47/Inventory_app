@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -13,7 +14,7 @@ class Unit(BaseModel):
 
 class SaleWrite(BaseModel):
     firstname: str
-    lastname: str | None = Field(default=None)
+    lastname: str
     phone_number: str
     units: list[Unit]
     selling_price: float
@@ -29,10 +30,7 @@ class SaleRead(Sale):
     shop_id: UUID
 
 
-class SaleUpdate:
-    firstname: str | None = Field(default=None)
-    lastname: str | None = Field(default=None)
-    phone: str | None = Field(default=None)
+class SaleUpdate(BaseModel):
     selling_price: float | None = Field(default=None)
     amount_paid: float | None = Field(default=None)
 
@@ -47,7 +45,7 @@ class Log(BaseModel):
     ref: UUID
     description: str
     time: float
-    payload: str
+    payload: dict[str, Any]
 
 
 class SaleLogs(BaseModel):
@@ -55,12 +53,28 @@ class SaleLogs(BaseModel):
     logs: list[Log] = Field(default_factory=list)
 
 
-# Query Models
-class SaleQueryParams(BaseModel):
-    firstname: str | None = Field(default=None)
-    lastname: str | None = Field(default=None)
-    phone_number: str | None = Field(default=None)
-    sku: str | None = Field(default=None)
-    product: str | None = Field(default=None)
-    start_date: datetime | None = Field(default=None)
-    end_date: datetime | None = Field(default=None)
+class CustomerWrite(BaseModel):
+    phone: str
+    firstname: str
+    lastname: str
+    new_phone: str | None = Field(default=None)
+
+
+class Purchase(BaseModel):
+    ref: UUID
+    selling_price: float
+    amount_paid: float
+    products: list[Unit]
+    date: datetime
+
+
+class CustomerRead(BaseModel):
+    phone: str
+    firstname: str
+    lastname: str
+    purchases: list[Purchase]
+
+
+class ShopCustomer(BaseModel):
+    shop_id: UUID
+    customers: list[CustomerRead]
