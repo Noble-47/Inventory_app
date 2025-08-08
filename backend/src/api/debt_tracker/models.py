@@ -8,6 +8,7 @@ class Debt(BaseModel):
     amount_paid: float
     selling_price: float
     last_paid_date: datetime | None = Field(default=None)
+    cleared: bool
 
 
 class Debtor(BaseModel):

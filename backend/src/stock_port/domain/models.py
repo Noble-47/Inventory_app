@@ -71,7 +71,7 @@ class BatchLine(BaseModel, table=True):
     sku: str
     cost: float
     expected_quantity: int
-    delivered_quantity: int | None = Field(default=None)
+    delivered_quantity: int | None = Field(default=0)
     delivery_date: datetime | None = Field(default=None)
 
 
@@ -120,15 +120,18 @@ class Order(BaseModel, table=True):
         if self.status == OrderStatus.cancelled:
             raise exceptions.CancelledOrder()
 
-        completed_batchline = []
+        processed_batchline = []
         for sku in orderline:
             batch = next(batch for batch in self.batchline if batch.sku == sku)
-            if batch.delivered_quantity:
+            if batch.delivered_quantity == batch.expected_quantity:
                 continue
-            batch.delivered_quantity = orderline[sku]["quantity"]
-            batch.cost = orderline[sku].get("cost", batch.cost)
+            batch.delivered_quantity += orderline[sku]["quantity"]
+            if orderline[sku].get("cost") is not None:
+                batch.cost = orderline[sku].get("cost")  # , batch.cost)
             batch.delivery_date = datetime_now_func()
-            completed_batchline.append(batch.model_dump())
+            data = batch.model_dump()
+            data["delivered_quantity"] = orderline[sku]["quantity"]
+            processed_batchline.append(data)
 
         if all(b.delivered_quantity == b.expected_quantity for b in self.batchline):
             self.status = OrderStatus.delivered
@@ -138,12 +141,12 @@ class Order(BaseModel, table=True):
         self.cost = sum(b.cost for b in self.batchline)
         self.delivery_date = datetime_now_func()
 
-        if completed_batchline:
+        if processed_batchline:
             self.events.append(
                 events.OrderCompleted(
                     order_id=self.id,
                     shop_id=self.shop_id,
-                    orderline=completed_batchline,
+                    orderline=processed_batchline,
                     delivery_date=self.delivery_date,
                 )
             )

@@ -115,23 +115,26 @@ def shop_settings(shop_id: uuid.UUID):
 def business_invites(business_id: uuid.UUID):
     session = next(db.db_session())
     token_db = db.Tokenizer(session)
-    invites = token_db.fetch(business_id)
+    record = token_db.fetch(business_id)
     view = {}
     view["id"] = business_id
     view["shops"] = [
         {
-            "id": invite.shop_id,
-            "location": invite.shop_location,
-            "invite": {
-                "for": invite.email,
-                "created": invite.created,
-                "used": invite.used,
-                "expired": invite.expired,
-                "token": invite.token_str,
-                "sent": invite.sent,
-            },
+            "id": shop.shop_id,
+            "location": shop.shop_location,
+            "invites": [
+                {
+                    "for": invite.email,
+                    "created": invite.created,
+                    "used": invite.used,
+                    "expired": invite.expired,
+                    "token": invite.token_str,
+                    "sent": invite.sent,
+                }
+                for invite in invites
+            ],
         }
-        for invite in invites
+        for shop, invites in record
     ]
     return view
 
@@ -139,21 +142,23 @@ def business_invites(business_id: uuid.UUID):
 def shop_invite(shop_id: uuid.UUID):
     session = next(db.db_session())
     token_db = db.Tokenizer(session)
-    invites = token_db.get_shop_invite(shop_id)
+    location, invites = token_db.get_shop_invite(shop_id)
     if invites:
         return {
-            "id": invite.shop_id,
-            "location": invite.shop_location,
-            "invite": [{
-                "for": invite.email,
-                "created": invite.created,
-                "used": invite.used,
-                "expired": invite.expired,
-                "token": invite.token_str,
-                "sent": invite.sent,
-            } for invite in invites],
+            "id": shop_id,
+            "location": location,
+            "invites": [
+                {
+                    "for": invite.email,
+                    "created": invite.created,
+                    "used": invite.used,
+                    "expired": invite.expired,
+                    "token": invite.token_str,
+                    "sent": invite.sent,
+                }
+                for invite in invites
+            ],
         }
-    return None
 
 
 ## View history

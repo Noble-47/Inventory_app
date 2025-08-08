@@ -123,7 +123,12 @@ class Stock:
 
     def add(self, ref: str, quantity: float, price: float, time: datetime):
         new_batch = Batch(self.sku, ref, quantity, price, time)
-        self.batches.append(new_batch)
+        batch = next((batch for batch in self if batch.ref == ref), None)
+        if batch:
+            batch.quantity += quantity
+            batch.stock_time = time
+        else:
+            self.batches.append(new_batch)
         self.events.append(
             events.BatchAddedToStock(
                 self.shop_id, self.sku, new_batch.ref, quantity, price, time

@@ -1,3 +1,4 @@
+from collections import namedtuple, defaultdict
 from datetime import datetime, timedelta
 import hashlib
 import uuid
@@ -10,6 +11,9 @@ from shopify.db.models import Token
 from shopify.domain import events
 from shopify import triggers
 from shopify import config
+
+
+Shop = namedtuple("Shop", "shop_id, shop_location")
 
 
 class Tokenizer:
@@ -92,13 +96,17 @@ class Tokenizer:
         invites = self.session.exec(
             select(Token).where(Token.business_id == business_id)
         ).all()
-        return invites
+        grouped = defaultdict(list)
+        for invite in invites:
+            shop = Shop(shop_id=invite.shop_id, shop_location=invite.shop_location)
+            grouped[shop].append(invite)
+        return list(grouped.items())
 
     def get_shop_invite(self, shop_id: uuid.UUID):
-        invite = self.session.exec(
+        invites = self.session.exec(
             select(Token).where(Token.shop_id == shop_id, Token.is_valid == True)
         ).all()
-        return invite
+        return invites[0].shop_location, invites
 
     def mark_as_sent(self, token_str: str):
         token = self.session.exec(

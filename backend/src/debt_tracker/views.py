@@ -11,7 +11,9 @@ def get_debtors(shop_id):
                 "firstname": debtor.firstname,
                 "lastname": debtor.lastname,
                 "phone": debtor.phone,
-                "debts": [debt.model_dump() for debt in debtor.debts],
+                "debts": [
+                    debt.model_dump() for debt in debtor.debts if not debt.cleared
+                ],
             }
             for debtor in debtors
         ]
@@ -31,6 +33,7 @@ def get_debts(shop_id, query=None):
                     "amount_paid": debt.amount_paid,
                     "selling_price": debt.selling_price,
                     "last_paid_date": debt.last_paid_date,
+                    "cleared": debt.cleared,
                 }
                 for debt in debts
             ]
@@ -48,6 +51,7 @@ def get_debt(shop_id, sale_ref):
             "selling_price": debt.selling_price,
             "balance": debt.balance,
             "last_paid_date": debt.last_paid_date,
+            "cleared": debt.cleared,
         }
 
 

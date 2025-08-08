@@ -76,5 +76,9 @@ class RecordsDB:
         return self.session.exec(
             select(Debtor)
             .join(ActiveRecord)
-            .where(ActiveRecord.shop_id == shop_id, ActiveRecord.active == True)
+            .join(Debt)
+            .where(
+                ActiveRecord.shop_id == shop_id,
+                ActiveRecord.active == True,
+            )
         ).all()
