@@ -56,6 +56,7 @@ class Registry(db.BaseRepo):
             .where(
                 models.ShopRegistry.manager_id == account_id,
                 models.ShopRegistry.deleted == False,
+                models.ManagerRegistry.is_active == True,
             )
         ).all()
 
@@ -79,7 +80,10 @@ class Registry(db.BaseRepo):
 
     def get_shop_manager(self, shop_id: uuid.UUID):
         shop_registry = self.session.exec(
-            select(models.ShopRegistry).where(models.ShopRegistry.shop_id == shop_id)
+            select(models.ShopRegistry).where(
+                models.ShopRegistry.shop_id == shop_id,
+                models.ManagerRegistry.is_active == True,
+            )
         ).first()
         if shop_registry and shop_registry.manager is not None:
             return shop_registry.manager.fullname
@@ -89,6 +93,25 @@ class Registry(db.BaseRepo):
         shop_with_managers = self.session.exec(
             select(models.ShopRegistry, models.ManagerRegistry.assigned)
             .join(models.ManagerRegistry)
-            .where(models.ShopRegistry.manager_id != None)
+            .where(
+                models.ShopRegistry.manager_id != None,
+                models.ManagerRegistry.is_active == True,
+            )
         ).all()
         return shop_with_managers
+
+    def get_shop_registry(self, business_id, shop_id):
+        return self.session.exec(
+            select(models.ShopRegistry).where(
+                models.ShopRegistry.business_id == business_id,
+                models.ShopRegistry.shop_id == shop_id,
+            )
+        ).first()
+
+    def get_manager_registry(self, business_id, shop_id):
+        return self.session.exec(
+            select(models.ManagerRegistry).where(
+                models.ManagerRegistry.business_id == business_id,
+                models.ManagerRegistry.shop_id == shop_id,
+            )
+        ).first()

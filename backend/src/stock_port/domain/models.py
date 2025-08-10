@@ -14,7 +14,7 @@ from stock_port.domain import events
 
 
 def batch_ref_gen(sku, quantity):
-    ref = f"{sku}-Q{int(quantity)}-{datetime_now_func().strftime('%y-%m-%d-%H-%M')}"
+    ref = f"{sku}-Q{int(quantity)}-{datetime_now_func().strftime('%y-%m-%d-%H-%M-%S')}"
     print(ref)
     return ref
 
@@ -27,7 +27,7 @@ class ShopSupplier(BaseModel, table=True):
     __tablename__ = "shop_suppliers"
     id: int | None = Field(default=None, primary_key=True)
     shop_id: UUID = Field(foreign_key="records.shop_id")
-    supplier_phone: int = Field(foreign_key="suppliers.phone")
+    supplier_phone: str = Field(foreign_key="suppliers.phone")
     supplier: "Supplier" = Relationship()
     supplies: list["Order"] = Relationship(sa_relationship_kwargs={"viewonly": True})
 
@@ -36,7 +36,7 @@ class Supplier(BaseModel, table=True):
     __tablename__ = "suppliers"
     firstname: str
     lastname: str
-    phone: str | None = Field(primary_key=True)
+    phone: str | None = Field(primary_key=True, max_length=15)
     id: int | None = Field(default=None)
     supplies: list["Order"] = Relationship(
         back_populates="supplier",

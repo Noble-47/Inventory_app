@@ -39,6 +39,11 @@ class Account(db.BaseRepo):
         ).first()
         return account
 
+    def get_by_id(self, id):
+        return self.session.exec(
+            select(models.Account).where(models.Account.id == id)
+        ).first()
+
     def check_email_exists(self, email: str):
         return (
             self.session.exec(

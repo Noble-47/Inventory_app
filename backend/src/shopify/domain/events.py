@@ -89,6 +89,7 @@ class DismissedManager(Event):
     business_id: SerializableUUID
     shop_id: SerializableUUID
     shop_location: str
+    manager_id: int
     description: str = Field(default="Dismissed Shop Manager")
 
 

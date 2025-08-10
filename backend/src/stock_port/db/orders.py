@@ -15,7 +15,8 @@ class OrderDB:
         order = self.session.exec(
             select(Order).where(Order.id == order_id, Order.shop_id == shop_id)
         ).first()
-        self.seen.add(order)
+        if order:
+            self.seen.add(order)
         return order
 
     def create(self, shop_id, batchline, expected_delivery_date, cost, supplier):
@@ -35,7 +36,7 @@ class OrderDB:
                 shop_id=order.shop_id,
                 status=order.status,
                 supplier=repr(supplier.supplier),
-                supplier_phone=supplier.supplier_phone,
+                supplier_phone=str(supplier.supplier_phone),
                 order_line=[
                     events.NewOrderLine(
                         sku=b.sku,

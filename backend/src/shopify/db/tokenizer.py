@@ -104,9 +104,11 @@ class Tokenizer:
 
     def get_shop_invite(self, shop_id: uuid.UUID):
         invites = self.session.exec(
-            select(Token).where(Token.shop_id == shop_id, Token.is_valid == True)
+            select(Token).where(Token.shop_id == shop_id)  # , Token.is_valid == True)
         ).all()
-        return invites[0].shop_location, invites
+        if invites:
+            return invites[0].shop_location, invites
+        return None, []
 
     def mark_as_sent(self, token_str: str):
         token = self.session.exec(

@@ -62,7 +62,10 @@ class ManagerRegistry(SQLModel, table=True):
     assigned: datetime | None
 
     account: Account = Relationship(
-        sa_relationship_kwargs={"overlaps": "manager_id, shop_registry"}
+        sa_relationship_kwargs={
+            "overlaps": "manager_id, shop_registry",
+            "cascade": "all, delete",
+        }
     )
 
     @property
@@ -195,10 +198,14 @@ class Business(SQLModel, table=True, frozen=True):
         shop = self.search_registry(shop_id)
         record = self.get_manager(shop_id)
         record.is_active = False
+        manager_id = shop.manager_id
         shop.manager_id = None
         self.events.append(
             events.DismissedManager(
-                business_id=self.id, shop_id=shop.shop_id, shop_location=shop.location
+                business_id=self.id,
+                shop_id=shop.shop_id,
+                shop_location=shop.location,
+                manager_id=manager_id,
             )
         )
 

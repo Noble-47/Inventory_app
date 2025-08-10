@@ -8,3 +8,7 @@ class DuplicateOrderDelivery(Exception):
 
 class CancelledOrder(Exception):
     pass
+
+
+class OrderNotFound(Exception):
+    pass

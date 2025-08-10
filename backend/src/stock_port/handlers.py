@@ -1,9 +1,10 @@
 from uuid import UUID
 
 from shared import get_rotating_logger
-from exchange.hub import publish
-from stock_port.domain import events
 from stock_port.domain import commands
+from stock_port.domain import events
+from exchange.hub import publish
+from stock_port import exceptions
 from stock_port.db import DB
 
 from stock_port.domain.models import batch_ref_gen, BatchLine
@@ -59,8 +60,9 @@ def delete_order(cmd: commands.DeleteOrder, db):
 def cancel_order(cmd: commands.CancelOrder, db):
     with db:
         order = db.orders.get(shop_id=cmd.shop_id, order_id=cmd.order_id)
-        if order:
-            order.cancel(reason=cmd.reason)
+        if order is None:
+            raise exceptions.OrderNotFound()
+        order.cancel(reason=cmd.reason)
         db.commit()
 
 

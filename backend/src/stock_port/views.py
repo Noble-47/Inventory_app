@@ -16,8 +16,8 @@ def get_order_details(shop_id, order_id: UUID):
     session = next(db.db_session())
     record_db = db.RecordDB(session)
     order = record_db.get_order(shop_id=shop_id, order_id=order_id)
+    view = {}
     if order:
-        view = {}
         view["orderline"] = [b.model_dump() for b in order.batchline]
         view["supplier_firstname"] = order.supplier.firstname
         view["supplier_lastname"] = order.supplier.lastname

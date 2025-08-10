@@ -88,3 +88,4 @@ def delete_invite(shop_id: ShopIDDep):
 async def dismiss_manager(business_id: BusinessIDDep, shop_id: ShopIDDep):
     cmd = commands.DismissManager(business_id=business_id, shop_id=shop_id)
     bus.handle(cmd)
+    return {"message": "Manager dismissed"}

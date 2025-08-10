@@ -1,3 +1,4 @@
+from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Response
@@ -22,42 +23,33 @@ router = APIRouter(
 @router.get("/", response_model=models.ShopOrders)
 def view_orders(shop_id: ShopIDDep):
     view = views.get_orders(shop_id)
-    if view:
-        return view
-    raise HTTPException(status_code=404, detail="Shop record not found")
+    return view
 
 
 @router.get("/suppliers", response_model=models.ShopSuppliers)
 def view_shop_suppliers(shop_id: ShopIDDep):
     view = views.get_suppliers(shop_id)
-    if view:
-        return view
-    return Response(content={}, status_code=200)
-    raise HTTPException(status_code=404, detail="Shop record not found")
+    return view
 
 
-@router.get("/suppliers/{supplier_id}", response_model=models.Supplier)
+@router.get("/suppliers/{supplier_id}", response_model=Optional[models.Supplier])
 def view_supplier_detail(shop_id: ShopIDDep, supplier_id: int):
     view = views.get_supplier_details(shop_id, supplier_id)
     if view:
         return view
-    return Response(content={}, status_code=200)
 
 
 @router.get("/history", response_model=models.ShopHistory)
 def view_order_history(shop_id: ShopIDDep):
     view = views.get_shop_history(shop_id)
-    if view:
-        return view
-    return Response(content={}, status_code=200)
+    return view
 
 
-@router.get("/{order_id}", response_model=models.Order)
+@router.get("/{order_id}", response_model=Optional[models.Order])
 def view_order(shop_id: ShopIDDep, order_id: UUID):
     view = views.get_order_details(shop_id=shop_id, order_id=order_id)
     if view:
         return view
-    return Response(content={}, status_code=200)
 
 
 @router.post("/create")
@@ -105,6 +97,8 @@ def cancel_order(shop_id: ShopIDDep, cancel: models.CancelOrder):
     cmd = commands.CancelOrder(
         shop_id=shop_id, order_id=cancel.order_id, reason=cancel.reason
     )
-    handle(cmd)
-
+    try:
+        handle(cmd)
+    except exceptions.OrderNotFound:
+        return {"Message": "Order not found"}
     return {"Message": "Order cancelled"}

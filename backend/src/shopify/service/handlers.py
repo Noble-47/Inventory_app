@@ -134,8 +134,14 @@ def assign_shop_manager(command: commands.AssignManager, uow: UnitOfWork):
 def dismiss_shop_manager(command: commands.DismissManager, uow: UnitOfWork):
     """Dismiss current shop manager."""
     with uow:
+        manager_registry = uow.registry.get_manager_registry(
+            business_id=command.business_id, shop_id=command.shop_id
+        )
+        manager = manager_registry.account
         business = uow.business.get(command.business_id)
         business.dismiss_shop_manager(command.shop_id)
+        uow.session.delete(manager)
+        uow.session.delete(manager_registry)
         uow.commit()
 
 
