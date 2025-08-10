@@ -2,15 +2,15 @@ from fastapi import Depends, FastAPI, HTTPException, Query, Response, Request
 from fastapi.security import OAuth2PasswordBearer
 from fastapi.responses import JSONResponse
 
-from shopify.exceptions import UnsupportedSettingException
 from shopify.bootstrap import bootstrap
 from shopify.domain import commands
 from shopify import exceptions
 from shopify import config
 from shopify import db
 
-from api.shopify.models import InviteAccept, ManagerPermissions
 from api.shopify.dependencies import ActiveUserDep
+from api.shopify.exceptions import UnsupportedSettingException
+from api.shopify.models import InviteAccept, ManagerPermissions
 
 
 bus = bootstrap()

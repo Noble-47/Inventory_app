@@ -2,13 +2,13 @@ import uuid
 
 from fastapi import APIRouter, Depends, Request, Response
 
-from shopify.exceptions import UnsupportedSettingException
 from shopify.domain import commands
 from shopify import exceptions
 from shopify import views
 
-from api.shopify import models
 from api.shopify import bus
+from api.shopify import models
+from api.shopify.exceptions import UnsupportedSettingException
 from api.shopify.dependencies import SessionDep, ShopIDDep, BusinessIDDep
 from api.shopify.dependencies import verify_shop_belongs_to_current_user_business
 
