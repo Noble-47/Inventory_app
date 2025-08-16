@@ -18,10 +18,10 @@ class AnalyticModels(SQLModel, registry=registry()):
 
 class Inventory(AnalyticModels, table=True):
     shop_id: UUID = Field(foreign_key="report.shop_id", primary_key=True)
-    count: int
-    value: float
+    count: int = Field(default=0.0)
+    value: float = Field(default=0.0)
     delta: float = Field(default=0.0)
-    cogs: float
+    cogs: float = Field(default=0.0)
 
     def update(self, count, value, cogs):
         super().update(count=count, value=value)
@@ -30,23 +30,23 @@ class Inventory(AnalyticModels, table=True):
 
 class Sale(AnalyticModels, table=True):
     shop_id: UUID = Field(foreign_key="report.shop_id", primary_key=True)
-    count: int
+    count: int = Field(default=0.0)
     delta: float = Field(default=0.0)
-    value: int
+    value: int = Field(default=0.0)
 
 
 class Order(AnalyticModels, table=True):
     shop_id: UUID = Field(foreign_key="report.shop_id", primary_key=True)
-    count: int
+    count: int = Field(default=0.0)
     delta: float = Field(default=0.0)
-    value: int
+    value: int = Field(default=0.0)
 
 
 class Debt(AnalyticModels, table=True):
     shop_id: UUID = Field(foreign_key="report.shop_id", primary_key=True)
-    count: float
+    count: float = Field(default=0.0)
     delta: float = Field(default=0.0)
-    value: float
+    value: float = Field(default=0.0)
 
 
 class Analytics(AnalyticModels, table=True):
@@ -66,9 +66,8 @@ class Analytics(AnalyticModels, table=True):
         self.order = Order(shop_id=shop_id, **orders)
         self.debt = Debt(shop_id=shop_id, **debt)
         self.sale = Sale(shop_id=shop_id, **sales)
-        self.profit_delta = (
-            0 if profit == self.profit else (profit - self.profit) / self.profit
-        )
+        profit = (self.sale.value - self.inventory.cogs) - self.debt.value
+        self.profit_delta = self.compute_profit_delta(profit)
         self.profit = profit
         self.last_updated = datetime_now_func()
 
@@ -78,6 +77,8 @@ class Analytics(AnalyticModels, table=True):
                 return 100
             if profit < self.profit:
                 return -100
+            if profit == 0:
+                return 0.0
         return (profit - self.profit) / self.profit
 
     def update(self, orders, sales, inventory, debt):
