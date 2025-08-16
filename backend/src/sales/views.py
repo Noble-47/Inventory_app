@@ -93,3 +93,10 @@ def get_shop_customers(shop_id):
                 }
             )
         return view
+
+
+def get_report(shop_id):
+    with DB() as db:
+        record = db.record.get(shop_id=shop_id)
+        report = {"count": record.count, "value": record.value}
+    return report

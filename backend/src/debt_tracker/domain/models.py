@@ -16,12 +16,6 @@ class BaseModel(SQLModel, registry=registry()):
     pass
 
 
-class Record(BaseModel, table=True):
-    __tablename__ = "records"
-    shop_id: str = Field(primary_key=True)
-    deleted: bool = Field(default=False)
-
-
 class Debtor(BaseModel, table=True):
     __tablename__ = "debtors"
     firstname: str
@@ -125,3 +119,18 @@ class DebtLog(BaseModel, table=True):
     description: str
     time: datetime
     payload: str
+
+
+class Record(BaseModel, table=True):
+    __tablename__ = "records"
+    shop_id: str = Field(primary_key=True)
+    deleted: bool = Field(default=False)
+    debts: list[Debt] = Relationship()
+
+    @property
+    def count(self):
+        return len([debt for debt in self.debts if debt.cleared == False])
+
+    @property
+    def value(self):
+        return sum(debt.balance for debt in self.debts if debt.cleared == False)

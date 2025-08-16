@@ -53,3 +53,11 @@ def get_shop_history(shop_id):
     audit_db = db.AuditDB(session)
     history = audit_db.fetch(shop_id)
     return {"shop_id": shop_id, "logs": [log.model_dump() for log in history]}
+
+
+def get_report(shop_id):
+    session = next(db.db_session())
+    record = session.exec(select(Record).where(Record.shop_id == shop_id)).first()
+    report = {"count": record.count, "value": record.value}
+    session.close()
+    return report

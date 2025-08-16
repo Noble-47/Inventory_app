@@ -1,6 +1,6 @@
 from sqlalchemy import select
 
-from inventory.domain.read_models import StockView
+from inventory.domain.read_models import StockView, InventoryView
 from inventory.adapters.orm import db_session
 from inventory.domain.models import Stock
 
@@ -73,3 +73,18 @@ def get_stock_detail(shop_id, sku):
             "level": stock.level,
             "price": stock.price,
         }
+
+
+def get_report(shop_id):
+    session = next(db_session())
+    shop_id = str(shop_id)
+    inventory = session.scalars(
+        select(InventoryView).where(InventoryView.shop_id == shop_id)
+    ).first()
+    report = {
+        "count": inventory.level,
+        "value": inventory.value,
+        "cogs": inventory.cogs,
+    }
+    session.close()
+    return report

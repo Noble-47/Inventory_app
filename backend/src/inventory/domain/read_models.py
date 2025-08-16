@@ -93,6 +93,10 @@ class InventoryView(BaseModel):
     def value(self):
         return sum(stock.value for stock in self.stocks)
 
+    @property
+    def level(self):
+        return sum(stock.level for stock in self.stocks)
+
     @model_serializer
     def serialize_model(self):
         return {

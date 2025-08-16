@@ -106,6 +106,15 @@ class Record(SalesModel, table=True):
     __tablename__ = "records"
     shop_id: UUID = Field(primary_key=True)
     deleted: bool = Field(default=False)
+    sales: list[Sale] = Relationship()
+
+    @property
+    def count(self):
+        return len(self.sales)
+
+    @property
+    def value(self):
+        return sum(sale.selling_price for sale in self.sales)
 
 
 class SaleAudit(SalesModel, table=True):

@@ -171,6 +171,14 @@ class Record(BaseModel, table=True):
     )
     orders: list[Order] = Relationship(sa_relationship_kwargs={"viewonly": True})
 
+    @property
+    def count(self):
+        return len([order for order in self.orders if order.status == "delivered"])
+
+    @property
+    def value(self):
+        return sum(order.cost for order in self.orders if order.status == "delivered")
+
 
 class OrderAudit(BaseModel, table=True):
     __tablename__ = "order_audit"

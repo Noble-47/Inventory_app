@@ -5,6 +5,7 @@ from fastapi import FastAPI, Depends
 from sqlalchemy.orm import Session
 
 from exchange.channels import inventory
+from exchange.channels import analytics
 from exchange.channels import tracker
 from exchange.channels import shopify
 from exchange.channels import orders
@@ -40,6 +41,7 @@ def create_hub(session):
     hub = Hub(router)
 
     inventory.initialize_hub(hub)
+    analytics.initialize_hub(hub)
     tracker.initialize_hub(hub)
     shopify.initialize_hub(hub)
     orders.initialize_hub(hub)

@@ -1,6 +1,6 @@
 from sqlmodel import select
 
-from debt_tracker.domain.models import Debt
+from debt_tracker.domain.models import Debt, Record
 from debt_tracker.db import db_session
 
 
@@ -10,3 +10,11 @@ def debt_exists(shop_id, sale_ref):
     result = session.exec(stmt).first() is not None
     session.close()
     return result
+
+
+def get_report(shop_id):
+    session = next(db_session())
+    record = session.exec(select(Record).where(Record.shop_id == str(shop_id))).first()
+    report = {"count": record.count, "value": record.value}
+    session.close()
+    return report
